@@ -1,8 +1,7 @@
 ﻿using Functional.Maybe;
 using System;
-using System.Linq;
-using System.Collections.Immutable;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace Workshop.Domain.Work
 {
@@ -10,48 +9,55 @@ namespace Workshop.Domain.Work
 	{
 		public static readonly JobWorkerAssignmentMap Empty = new JobWorkerAssignmentMap();
 
-		private readonly IImmutableDictionary<JobIdentifier, WorkerIdentifier> _assignments;
+		private readonly IImmutableDictionary<JobIdentifier, WorkerIdentifier> _assignmentsByJob;
+		private readonly IImmutableDictionary<WorkerIdentifier, JobIdentifier> _assignmentsByWorker;
 
-		private JobWorkerAssignmentMap() : this(ImmutableDictionary<JobIdentifier, WorkerIdentifier>.Empty) { }
+		private JobWorkerAssignmentMap() : this(ImmutableDictionary<JobIdentifier, WorkerIdentifier>.Empty, ImmutableDictionary<WorkerIdentifier, JobIdentifier>.Empty) { }
 
-		private JobWorkerAssignmentMap(IImmutableDictionary<JobIdentifier, WorkerIdentifier> assignments)
+		private JobWorkerAssignmentMap(IImmutableDictionary<JobIdentifier, WorkerIdentifier> assignmentsByJob, IImmutableDictionary<WorkerIdentifier, JobIdentifier> assignmentsByWorker)
 		{
-			_assignments = assignments;
+			_assignmentsByJob = assignmentsByJob;
+			_assignmentsByWorker = assignmentsByWorker;
 		}
 
-		public Maybe<JobIdentifier> this[WorkerIdentifier worker]
-		{
-			get
-			{
-				return FindJob(worker);
-			}
-		}
+		public Maybe<JobIdentifier> this[WorkerIdentifier worker] 
+			=> _assignmentsByWorker.ContainsKey(worker)
+				? _assignmentsByWorker[worker].ToMaybe()
+				: Maybe<JobIdentifier>.Nothing;
 
-		public Maybe<WorkerIdentifier> this[JobIdentifier job]
-		{
-			get
-			{
-				return _assignments.ContainsKey(job)
-					? _assignments[job].ToMaybe()
-					: Maybe<WorkerIdentifier>.Nothing;
-			}
-		}
-		
+		public Maybe<WorkerIdentifier> this[JobIdentifier job] 
+			=> _assignmentsByJob.ContainsKey(job)
+				? _assignmentsByJob[job].ToMaybe()
+				: Maybe<WorkerIdentifier>.Nothing;
+
 		public JobWorkerAssignmentMap WithAssignment(JobIdentifier job, WorkerIdentifier worker) 
 			=> new JobWorkerAssignmentMap(
-				FindJob(worker).SelectOrElse(
-					assignedJob => _assignments.Remove(assignedJob),
-					() => _assignments.Remove(job)
-				).Add(job, worker)
+				this[worker]
+					.SelectOrElse(oldJob => _assignmentsByJob.Remove(oldJob), () => _assignmentsByJob)
+					.Remove(job)
+					.Add(job, worker),
+				this[job]
+					.SelectOrElse(oldWorker => _assignmentsByWorker.Remove(oldWorker), () => _assignmentsByWorker)
+					.Remove(worker)
+					.Add(worker, job)
 			);
 
 		public JobWorkerAssignmentMap WithoutAssignment(JobIdentifier job)
-			=> new JobWorkerAssignmentMap(_assignments.Remove(job));
+			=> new JobWorkerAssignmentMap(
+				_assignmentsByJob.Remove(job),
+				this[job].SelectOrElse(
+					worker => _assignmentsByWorker.Remove(worker),
+					() => _assignmentsByWorker
+				)
+			);
 		
 		public JobWorkerAssignmentMap WithoutAssignment(WorkerIdentifier worker)
-			=> FindJob(worker).SelectOrElse(
-				job => WithoutAssignment(job),
-				() => this
+			=> new JobWorkerAssignmentMap(
+				this[worker].SelectOrElse(
+					job => _assignmentsByJob.Remove(job),
+					() => _assignmentsByJob
+				),
+				_assignmentsByWorker.Remove(worker)
 			);
 
 		public override bool Equals(object obj)
@@ -59,16 +65,10 @@ namespace Workshop.Domain.Work
 
 		public bool Equals(JobWorkerAssignmentMap other)
 			=> other != null
-			&& _assignments.Equals(other._assignments);
-
-		private Maybe<JobIdentifier> FindJob(WorkerIdentifier worker)
-			=> _assignments
-				.Where(pair => pair.Value == worker)
-				.Select(pair => pair.Key)
-				.SingleMaybe();
+			&& _assignmentsByJob.Equals(other._assignmentsByJob);
 
 		public override int GetHashCode() 
-			=> _assignments.GetHashCode();
+			=> _assignmentsByJob.GetHashCode();
 
 		public static bool operator ==(JobWorkerAssignmentMap map1, JobWorkerAssignmentMap map2) 
 			=> EqualityComparer<JobWorkerAssignmentMap>.Default.Equals(map1, map2);
