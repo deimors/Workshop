@@ -22,7 +22,7 @@ GameObject:
   - component: {fileID: 222038578322070582}
   - component: {fileID: 114908285763122402}
   m_Layer: 5
-  m_Name: Text
+  m_Name: Job Name Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -107,6 +107,7 @@ GameObject:
   - component: {fileID: 114681529079026030}
   - component: {fileID: 114271015952195326}
   - component: {fileID: 114670512653639134}
+  - component: {fileID: 114474452088985868}
   m_Layer: 5
   m_Name: Job Panel
   m_TagString: Untagged
@@ -143,6 +144,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _completedSlider: {fileID: 114674282937839612}
+--- !u!114 &114474452088985868
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1924418783755538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6624b57ddd92aec40ae82fc9e035d236, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _jobNameText: {fileID: 114908285763122402}
 --- !u!114 &114478765654876200
 MonoBehaviour:
   m_ObjectHideFlags: 1
