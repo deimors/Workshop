@@ -28,6 +28,10 @@ namespace Workshop.Presentation
 			Container
 				.BindInterfacesTo<JobList>()
 				.AsSingle();
+
+			Container
+				.BindInterfacesTo<AssignmentMap>()
+				.AsSingle();
 		}
 	}
 }

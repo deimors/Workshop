@@ -3,8 +3,9 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using Workshop.Domain.Work;
+using UniRx;
 
-namespace Assets.Code.UseCases.Work
+namespace Workshop.UseCases.Work
 {
 	public interface IReadWorkerJobAssignment
 	{
@@ -14,8 +15,7 @@ namespace Assets.Code.UseCases.Work
 
 	public interface IObserveWorkerJobAssignment
 	{
-		IObservable<Maybe<JobIdentifier>> Observe(WorkerIdentifier worker);
-		IObservable<Maybe<WorkerIdentifier>> Observe(JobIdentifier job);
+		IObservable<JobWorkerAssignmentMap> Assignments { get; }
 	}
 
 	public interface IWriteWorkerJobAssignment
@@ -24,15 +24,17 @@ namespace Assets.Code.UseCases.Work
 		Maybe<JobIdentifier> this[WorkerIdentifier worker] { set; }
 	}
 
-	public class WorkerJobAssignmentMap : IReadWorkerJobAssignment, IWriteWorkerJobAssignment, IObserveWorkerJobAssignment
+	public class AssignmentMap : IReadWorkerJobAssignment, IWriteWorkerJobAssignment, IObserveWorkerJobAssignment
 	{
-		private readonly IDictionary<JobIdentifier, WorkerIdentifier> _map = new Dictionary<JobIdentifier, WorkerIdentifier>();
+		private readonly IReactiveProperty<JobWorkerAssignmentMap> _assignmentSubject = new ReactiveProperty<JobWorkerAssignmentMap>();
+
+		IObservable<JobWorkerAssignmentMap> IObserveWorkerJobAssignment.Assignments => _assignmentSubject.AsObservable();
 
 		Maybe<WorkerIdentifier> IReadWorkerJobAssignment.this[JobIdentifier job]
 		{
 			get
 			{
-				return _map.Lookup(job);
+				return _assignmentSubject.Value[job];
 			}
 		}
 
@@ -40,7 +42,7 @@ namespace Assets.Code.UseCases.Work
 		{
 			get
 			{
-				return FindJob(worker);
+				return _assignmentSubject.Value[worker];
 			}
 		}
 
@@ -50,9 +52,9 @@ namespace Assets.Code.UseCases.Work
 		{
 			set
 			{
-				value.Match(
-					worker => _map[job] = worker,
-					() => _map.Remove(job)
+				_assignmentSubject.Value = value.SelectOrElse(
+					worker => _assignmentSubject.Value.WithAssignment(job, worker),
+					() => _assignmentSubject.Value.WithoutAssignment(job)
 				);
 			}
 		}
@@ -61,26 +63,11 @@ namespace Assets.Code.UseCases.Work
 		{
 			set
 			{
-				FindJob(worker).Match(job => _map.Remove(job), () => { });
-
-				value.Match(job => _map[job] = worker, () => { });
+				_assignmentSubject.Value = value.SelectOrElse(
+					job => _assignmentSubject.Value.WithAssignment(job, worker),
+					() => _assignmentSubject.Value.WithoutAssignment(worker)
+				);
 			}
 		}
-
-		IObservable<Maybe<JobIdentifier>> IObserveWorkerJobAssignment.Observe(WorkerIdentifier worker)
-		{
-			throw new NotImplementedException();
-		}
-
-		IObservable<Maybe<WorkerIdentifier>> IObserveWorkerJobAssignment.Observe(JobIdentifier job)
-		{
-			throw new NotImplementedException();
-		}
-
-		private Maybe<JobIdentifier> FindJob(WorkerIdentifier worker)
-			=> _map
-				.Where(pair => pair.Value == worker)
-				.Select(pair => pair.Key)
-				.SingleMaybe();
 	}
 }
