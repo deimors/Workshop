@@ -9,10 +9,11 @@ namespace Assets.Code.UseCases.Work
 {
 	public interface IReadWorker
 	{
-		IObservable<JobIdentifier> CurrentJob { get; }
+		
 	}
 
-	public class Worker
+	public class Worker : IReadWorker
 	{
+		
 	}
 }

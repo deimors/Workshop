@@ -30,6 +30,10 @@ namespace Workshop.Presentation
 				.AsSingle();
 
 			Container
+				.BindInterfacesTo<WorkerList>()
+				.AsSingle();
+
+			Container
 				.BindInterfacesTo<AssignmentMap>()
 				.AsSingle();
 		}
