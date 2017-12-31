@@ -1,9 +1,6 @@
 ﻿using Functional.Maybe;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,6 +20,8 @@ namespace Workshop.Presentation.Work
 		private readonly WorkerIdentifier workerIdentifier = new WorkerIdentifier();
 
 		private IWriteWorkerJobAssignment _writeAssigments;
+
+		private readonly Dropdown.OptionData[] _noneOptionData = new[] { new Dropdown.OptionData("None") };
 
 		[Inject]
 		public void Setup(IReadJobList readJobs, IObserveJobList observeJobs, IWriteWorkerJobAssignment writeAssignments)
@@ -53,21 +52,22 @@ namespace Workshop.Presentation.Work
 		private void UpdateDropdownOptions()
 		{
 			_jobListDropdown.ClearOptions();
-			_jobListDropdown.AddOptions(_jobOptions.Values.ToList());
+			_jobListDropdown.AddOptions(_noneOptionData.Concat(_jobOptions.Values).ToList());
 		}
 
-		private void OnOptionSelected(Dropdown.OptionData option) 
-			=> AssignToJob(GetJobByOption(option));
+		private void OnOptionSelected(Dropdown.OptionData option)
+			=> GetJobByOption(option)
+				.Match(AssignToJob, RemoveAssignment);
 
-		private JobIdentifier GetJobByOption(Dropdown.OptionData option) 
+		private Maybe<JobIdentifier> GetJobByOption(Dropdown.OptionData option) 
 			=> _jobOptions
-				.Single(pair => pair.Value == option)
-				.Key;
+				.SingleMaybe(pair => pair.Value == option)
+				.Select(pair => pair.Key);
 
 		private void AssignToJob(JobIdentifier job)
-		{
-			Debug.Log($"Assign {workerIdentifier} to {job}");
-			_writeAssigments[job] = workerIdentifier.ToMaybe();
-		}
+			=> _writeAssigments[workerIdentifier] = job.ToMaybe();
+
+		private void RemoveAssignment() 
+			=> _writeAssigments[workerIdentifier] = Maybe<JobIdentifier>.Nothing;
 	}
 }
