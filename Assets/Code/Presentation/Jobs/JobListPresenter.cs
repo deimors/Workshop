@@ -11,7 +11,7 @@ namespace Workshop.Presentation.Jobs
 	{
 		private JobPanel.Factory _jobPanelFactory;
 
-		private readonly IDictionary<JobIdentifier, JobPanel> _jobPanels = new Dictionary<JobIdentifier, JobPanel>();
+		private readonly IDictionary<JobIdentifier, IJobPanel> _jobPanels = new Dictionary<JobIdentifier, IJobPanel>();
 
 		[Inject]
 		public void Initialize(IObserveJobList jobList, JobPanel.Factory jobPanelFactory)

@@ -14,7 +14,7 @@ namespace Workshop.Presentation.Jobs
 
 		public override void InstallBindings()
 		{
-			Container.BindFactory<JobIdentifier, JobPanel, JobPanel.Factory>()
+			Container.BindFactory<JobIdentifier, IJobPanel, JobPanel.Factory>()
 				.FromSubContainerResolve()
 				.ByNewPrefab<JobPanel>(_jobPanelPrefab)
 				.UnderTransform(_jobPanelContainer.transform);

@@ -1,20 +1,21 @@
-﻿using UnityEngine;
-using Workshop.Domain.Work;
+﻿using Workshop.Domain.Work;
 using Workshop.UseCases.Work;
 using Zenject;
 
 namespace Workshop.Presentation.Jobs
 {
-	public class JobPanel : MonoInstaller
+	public interface IJobPanel { }
+
+	public class JobPanel : MonoInstaller, IJobPanel
 	{
-		public class Factory : Factory<JobIdentifier, JobPanel> { }
+		public class Factory : Factory<JobIdentifier, IJobPanel> { }
 
 		[Inject]
 		public JobIdentifier Identifier { get; }
 		
 		public override void InstallBindings()
 		{
-			Container.Bind<JobPanel>().FromInstance(this);
+			Container.Bind<IJobPanel>().FromInstance(this);
 
 			Container.BindInstance(Identifier);
 
