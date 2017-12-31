@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Functional.Maybe;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,9 +20,15 @@ namespace Workshop.Presentation.Work
 
 		private readonly IDictionary<JobIdentifier, Dropdown.OptionData> _jobOptions = new Dictionary<JobIdentifier, Dropdown.OptionData>();
 
+		private readonly WorkerIdentifier workerIdentifier = new WorkerIdentifier();
+
+		private IWriteWorkerJobAssignment _writeAssigments;
+
 		[Inject]
-		public void Setup(IReadJobList readJobs, IObserveJobList observeJobs)
+		public void Setup(IReadJobList readJobs, IObserveJobList observeJobs, IWriteWorkerJobAssignment writeAssignments)
 		{
+			_writeAssigments = writeAssignments;
+
 			readJobs.Keys
 				.ToObservable()
 				.Subscribe(AddJobOption);
@@ -31,17 +38,36 @@ namespace Workshop.Presentation.Work
 			observeJobs.ObserveAdd
 				.Do(AddJobOption)
 				.Subscribe(_ => UpdateDropdownOptions());
+
+			_jobListDropdown.onValueChanged
+				.AsObservable()
+				.Select(selectedIndex => _jobListDropdown.options[selectedIndex])
+				.Subscribe(OnOptionSelected);
 		}
 
-		private void AddJobOption(JobIdentifier jobId)
+		private void AddJobOption(JobIdentifier job)
 		{
-			_jobOptions[jobId] = new Dropdown.OptionData("Job");
+			_jobOptions[job] = new Dropdown.OptionData(job.ToString());
 		}
 
 		private void UpdateDropdownOptions()
 		{
 			_jobListDropdown.ClearOptions();
 			_jobListDropdown.AddOptions(_jobOptions.Values.ToList());
+		}
+
+		private void OnOptionSelected(Dropdown.OptionData option) 
+			=> AssignToJob(GetJobByOption(option));
+
+		private JobIdentifier GetJobByOption(Dropdown.OptionData option) 
+			=> _jobOptions
+				.Single(pair => pair.Value == option)
+				.Key;
+
+		private void AssignToJob(JobIdentifier job)
+		{
+			Debug.Log($"Assign {workerIdentifier} to {job}");
+			_writeAssigments[job] = workerIdentifier.ToMaybe();
 		}
 	}
 }

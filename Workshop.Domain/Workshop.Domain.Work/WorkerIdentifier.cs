@@ -1,8 +1,8 @@
 ﻿namespace Workshop.Domain.Work
 {
-	public class JobIdentifier
+	public class WorkerIdentifier
 	{
 		public override string ToString()
-			=> $"Job {GetHashCode().ToString("X")}";
+			=> $"Worker {GetHashCode().ToString("X")}";
 	}
 }

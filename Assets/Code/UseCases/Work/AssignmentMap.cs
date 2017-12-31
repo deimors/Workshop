@@ -26,7 +26,7 @@ namespace Workshop.UseCases.Work
 
 	public class AssignmentMap : IReadWorkerJobAssignment, IWriteWorkerJobAssignment, IObserveWorkerJobAssignment
 	{
-		private readonly IReactiveProperty<JobWorkerAssignmentMap> _assignmentSubject = new ReactiveProperty<JobWorkerAssignmentMap>();
+		private readonly IReactiveProperty<JobWorkerAssignmentMap> _assignmentSubject = new ReactiveProperty<JobWorkerAssignmentMap>(JobWorkerAssignmentMap.Empty);
 
 		IObservable<JobWorkerAssignmentMap> IObserveWorkerJobAssignment.Assignments => _assignmentSubject.AsObservable();
 
