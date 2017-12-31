@@ -6,7 +6,7 @@ using Workshop.Domain.Work;
 using Workshop.UseCases.Work;
 using Zenject;
 
-namespace Workshop.Presentation.Work
+namespace Workshop.Presentation.Jobs
 {
 	public class AssignedWorkTextPresenter : MonoBehaviour
 	{

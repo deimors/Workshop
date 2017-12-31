@@ -2,7 +2,7 @@
 using Workshop.Domain.Work;
 using Zenject;
 
-namespace Workshop.Presentation.Work
+namespace Workshop.Presentation.Jobs
 {
 	public class JobListInstaller : MonoInstaller
 	{

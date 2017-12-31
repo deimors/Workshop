@@ -4,7 +4,7 @@ using UnityEngine.UI;
 using Workshop.UseCases.Work;
 using Zenject;
 
-namespace Workshop.Presentation.Work
+namespace Workshop.Presentation.Workers
 {
 	public class PerformWorkButtonPresenter : MonoBehaviour
 	{
