@@ -15,16 +15,17 @@ namespace Workshop.Presentation.Work
 		[SerializeField]
 		private Dropdown _jobListDropdown;
 
+		[Inject]
+		public WorkerIdentifier WorkerIdentifier { get; }
+
 		private readonly IDictionary<JobIdentifier, Dropdown.OptionData> _jobOptions = new Dictionary<JobIdentifier, Dropdown.OptionData>();
-
-		private readonly WorkerIdentifier workerIdentifier = new WorkerIdentifier();
-
+		
 		private IWriteWorkerJobAssignment _writeAssigments;
 
 		private readonly Dropdown.OptionData[] _noneOptionData = new[] { new Dropdown.OptionData("None") };
 
 		[Inject]
-		public void Setup(IReadJobList readJobs, IObserveJobList observeJobs, IWriteWorkerJobAssignment writeAssignments)
+		public void Setup(IReadJobList readJobs, IObserveJobList observeJobs, IWriteWorkerJobAssignment writeAssignments, IObserveWorkerJobAssignment observeAssignments)
 		{
 			_writeAssigments = writeAssignments;
 
@@ -42,6 +43,10 @@ namespace Workshop.Presentation.Work
 				.AsObservable()
 				.Select(selectedIndex => _jobListDropdown.options[selectedIndex])
 				.Subscribe(OnOptionSelected);
+
+			observeAssignments.Assignments
+				.Where(assignments => assignments[WorkerIdentifier] == Maybe<JobIdentifier>.Nothing)
+				.Subscribe(_ => _jobListDropdown.value = 0);
 		}
 
 		private void AddJobOption(JobIdentifier job)
@@ -64,10 +69,16 @@ namespace Workshop.Presentation.Work
 				.SingleMaybe(pair => pair.Value == option)
 				.Select(pair => pair.Key);
 
+		private Dropdown.OptionData GetOptionByJob(Maybe<JobIdentifier> jobAssignment)
+			=> jobAssignment.SelectOrElse(
+				job => _jobOptions[job],
+				() => _noneOptionData.Single()
+			);
+
 		private void AssignToJob(JobIdentifier job)
-			=> _writeAssigments[workerIdentifier] = job.ToMaybe();
+			=> _writeAssigments[WorkerIdentifier] = job.ToMaybe();
 
 		private void RemoveAssignment() 
-			=> _writeAssigments[workerIdentifier] = Maybe<JobIdentifier>.Nothing;
+			=> _writeAssigments[WorkerIdentifier] = Maybe<JobIdentifier>.Nothing;
 	}
 }
