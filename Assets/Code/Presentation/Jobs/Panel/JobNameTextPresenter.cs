@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using Workshop.Domain.Work;
 using Zenject;
 
-namespace Workshop.Presentation.Jobs
+namespace Workshop.Presentation.Jobs.Panel
 {
 	public class JobNameTextPresenter : MonoBehaviour
 	{

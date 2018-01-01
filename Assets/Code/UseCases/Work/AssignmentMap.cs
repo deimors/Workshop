@@ -30,24 +30,10 @@ namespace Workshop.UseCases.Work
 
 		IObservable<JobWorkerAssignmentMap> IObserveWorkerJobAssignment.Assignments => _assignmentSubject.AsObservable();
 
-		Maybe<WorkerIdentifier> IReadWorkerJobAssignment.this[JobIdentifier job]
-		{
-			get
-			{
-				return _assignmentSubject.Value[job];
-			}
-		}
+		Maybe<WorkerIdentifier> IReadWorkerJobAssignment.this[JobIdentifier job] => _assignmentSubject.Value[job];
 
-		Maybe<JobIdentifier> IReadWorkerJobAssignment.this[WorkerIdentifier worker]
-		{
-			get
-			{
-				return _assignmentSubject.Value[worker];
-			}
-		}
-
+		Maybe<JobIdentifier> IReadWorkerJobAssignment.this[WorkerIdentifier worker] => _assignmentSubject.Value[worker];
 		
-
 		Maybe<WorkerIdentifier> IWriteWorkerJobAssignment.this[JobIdentifier job]
 		{
 			set

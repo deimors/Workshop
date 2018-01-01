@@ -10,15 +10,19 @@ namespace Workshop.Presentation
 	{
 		public override void InstallBindings()
 		{
+
+			/*
 			Container.Bind<IPerformWork>()
 				.To<CompleteWorkAfterDelay>()
 				.AsSingle()
 				.WithArguments(TimeSpan.FromSeconds(1));
+			
 
 			Container
 				.BindInterfacesTo<Job>()
 				.AsSingle()
 				.WithArguments(new JobStatus(new JobIdentifier(), 5 * QuantityOfWork.Unit, QuantityOfWork.None));
+			*/
 
 			Container.Bind<IWorkOnJob>()
 				.To<ApplyConstantWorkToJob>()

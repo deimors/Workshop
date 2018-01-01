@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using Workshop.Domain.Work;
+using Workshop.Presentation.Jobs.Panel;
 using Zenject;
 
 namespace Workshop.Presentation.Jobs

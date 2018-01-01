@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using Workshop.UseCases.Work;
 using Zenject;
 
-namespace Workshop.Presentation.Jobs
+namespace Workshop.Presentation.Jobs.Panel
 {
     public class WorkCompletedSliderPresenter : MonoBehaviour
     {

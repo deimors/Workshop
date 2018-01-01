@@ -2,6 +2,7 @@
 using UniRx;
 using UnityEngine;
 using Workshop.Domain.Work;
+using Workshop.Presentation.Jobs.Panel;
 using Workshop.UseCases.Work;
 using Zenject;
 

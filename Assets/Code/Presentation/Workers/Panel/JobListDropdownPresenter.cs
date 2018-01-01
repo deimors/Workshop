@@ -8,7 +8,7 @@ using Workshop.Domain.Work;
 using Workshop.UseCases.Work;
 using Zenject;
 
-namespace Workshop.Presentation.Jobs
+namespace Workshop.Presentation.Workers.Panel
 {
 	public class JobListDropdownPresenter : MonoBehaviour
 	{
