@@ -7,5 +7,7 @@ namespace Workshop.UseCases.Work
 		void Add(JobStatus job);
 
 		void Remove(JobIdentifier jobIdentifier);
+
+		IWriteJob this[JobIdentifier job] { get; }
 	}
 }

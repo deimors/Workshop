@@ -6,8 +6,6 @@ using Zenject;
 
 namespace Workshop.Presentation.Workers.Panel
 {
-	public class PerformWorkFactory : Factory<IWriteJob, IReadJob, IPerformWork> { }
-
 	public class WorkerPanel : MonoInstaller
 	{
 		public class Factory : Factory<WorkerIdentifier, WorkerPanel> { }
@@ -22,10 +20,6 @@ namespace Workshop.Presentation.Workers.Panel
 			Container.BindInstance(Identifier);
 
 			Container.Bind<IReadWorker>().FromResolveGetter<IReadWorkerList>(jobList => jobList[Identifier]);
-
-			Container.BindIFactory<IPerformWork>()
-				.To<CompleteWorkAfterDelay>()
-				.WithArguments(TimeSpan.FromSeconds(1));
 		}
 	}
 }

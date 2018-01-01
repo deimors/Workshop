@@ -1,6 +1,7 @@
 ﻿using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
+using Workshop.Domain.Work;
 using Workshop.UseCases.Work;
 using Zenject;
 
@@ -10,16 +11,13 @@ namespace Workshop.Presentation.Workers.Panel
 	{
 		[SerializeField]
 		private Button StartButton;
-
+		
 		[Inject]
-		public PerformWorkFactory PerformWorkFactory { get; }
-
-		[Inject]
-		public void Initialize(IPerformWork performWork, IReadJob jobState)
+		public void Initialize(WorkerIdentifier worker, IPerformAssignedWork performAssignedWork)
 		{
-			StartButton.onClick.AsObservable().Subscribe(_ => performWork.Perform());
+			StartButton.onClick.AsObservable().Subscribe(_ => performAssignedWork.Perform(worker));
 
-			jobState.Busy.Subscribe(busy => StartButton.interactable = !busy);
+			//jobState.Busy.Subscribe(busy => StartButton.interactable = !busy);
 		}
 	}
 }

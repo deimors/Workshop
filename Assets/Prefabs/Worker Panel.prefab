@@ -279,6 +279,7 @@ GameObject:
   - component: {fileID: 114050919526542908}
   - component: {fileID: 114996694600778836}
   - component: {fileID: 114899700903580432}
+  - component: {fileID: 114172261874633198}
   m_Layer: 5
   m_Name: Worker Panel
   m_TagString: Untagged
@@ -402,6 +403,18 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: Work
+--- !u!114 &114172261874633198
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1862912576974500}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 383a54d6ec0c0864b91dee1213ba5e3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  StartButton: {fileID: 114464044942019592}
 --- !u!114 &114183644582835414
 MonoBehaviour:
   m_ObjectHideFlags: 1

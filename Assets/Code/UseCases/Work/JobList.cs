@@ -9,18 +9,11 @@ namespace Workshop.UseCases.Work
 	public class JobList : IObserveJobList, IReadJobList, IWriteJobList
 	{
 		private readonly IReactiveDictionary<JobIdentifier, Job> _jobs = new ReactiveDictionary<JobIdentifier, Job>();
+		private IReadOnlyReactiveDictionary<JobIdentifier, Job> _readJobs => _jobs;
 
-		public IReadJob this[JobIdentifier identifier]
-		{
-			get
-			{
-				Job job;
-				if (((IReadOnlyReactiveDictionary<JobIdentifier, Job>)_jobs).TryGetValue(identifier, out job))
-					return job;
-				else
-					throw new KeyNotFoundException($"{identifier} not found");
-			}
-		}
+		IReadJob IReadJobList.this[JobIdentifier job] => _readJobs[job];
+
+		IWriteJob IWriteJobList.this[JobIdentifier job] => _readJobs[job];
 
 		public IObservable<JobIdentifier> ObserveAdd
 			=> _jobs.ObserveAdd().Select(addEvent => addEvent.Key);
@@ -35,7 +28,7 @@ namespace Workshop.UseCases.Work
 		public void Add(JobStatus job) 
 			=> _jobs.Add(job.Id, new Job(job));
 
-		public void Remove(JobIdentifier jobIdentifier) 
-			=> _jobs.Remove(jobIdentifier);
+		public void Remove(JobIdentifier job) 
+			=> _jobs.Remove(job);
 	}
 }
