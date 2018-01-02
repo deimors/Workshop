@@ -9,27 +9,6 @@ using Workshop.Domain.Work;
 
 namespace Workshop.UseCases.Work
 {
-	public interface IReadWorkerList
-	{
-		IReadWorker this[WorkerIdentifier identifier] { get; }
-
-		IEnumerable<WorkerIdentifier> Keys { get; }
-		IEnumerable<IReadWorker> Values { get; }
-	}
-
-	public interface IWriteWorkerList
-	{
-		void Add(WorkerIdentifier worker);
-
-		void Remove(WorkerIdentifier worker);
-	}
-
-	public interface IObserveWorkerList
-	{
-		IObservable<WorkerIdentifier> ObserveAdd { get; }
-		IObservable<WorkerIdentifier> ObserveRemove { get; }
-	}
-
 	public class WorkerList : IReadWorkerList, IWriteWorkerList, IObserveWorkerList
 	{
 		private IReactiveDictionary<WorkerIdentifier, Worker> _workers = new ReactiveDictionary<WorkerIdentifier, Worker>();

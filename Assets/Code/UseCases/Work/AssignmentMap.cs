@@ -7,23 +7,6 @@ using UniRx;
 
 namespace Workshop.UseCases.Work
 {
-	public interface IReadWorkerJobAssignment
-	{
-		Maybe<WorkerIdentifier> this[JobIdentifier job] { get; }
-		Maybe<JobIdentifier> this[WorkerIdentifier worker] { get; }
-	}
-
-	public interface IObserveWorkerJobAssignment
-	{
-		IObservable<JobWorkerAssignmentMap> Assignments { get; }
-	}
-
-	public interface IWriteWorkerJobAssignment
-	{
-		Maybe<WorkerIdentifier> this[JobIdentifier job] { set; }
-		Maybe<JobIdentifier> this[WorkerIdentifier worker] { set; }
-	}
-
 	public class AssignmentMap : IReadWorkerJobAssignment, IWriteWorkerJobAssignment, IObserveWorkerJobAssignment
 	{
 		private readonly IReactiveProperty<JobWorkerAssignmentMap> _assignmentSubject = new ReactiveProperty<JobWorkerAssignmentMap>(JobWorkerAssignmentMap.Empty);
