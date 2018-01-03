@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using Workshop.Domain.Work;
+using Workshop.Models;
 using Workshop.UseCases.Work;
 using Zenject;
 

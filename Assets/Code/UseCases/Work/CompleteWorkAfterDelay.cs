@@ -2,10 +2,10 @@
 using UniRx;
 using UnityEngine;
 using Workshop.Domain.Work;
+using Workshop.Models;
 
 namespace Workshop.UseCases.Work
 {
-
 	public class CompleteWorkAfterDelay : IPerformWork
 	{
 		private readonly TimeSpan _delay;

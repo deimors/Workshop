@@ -1,5 +1,6 @@
 ﻿using Functional.Maybe;
 using Workshop.Domain.Work;
+using Workshop.Models;
 using Zenject;
 
 namespace Workshop.UseCases.Work

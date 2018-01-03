@@ -1,11 +1,9 @@
 ﻿using Functional.Maybe;
 using System;
-using System.Linq;
-using System.Collections.Generic;
-using Workshop.Domain.Work;
 using UniRx;
+using Workshop.Domain.Work;
 
-namespace Workshop.UseCases.Work
+namespace Workshop.Models
 {
 	public class AssignmentMap : IReadWorkerJobAssignment, IWriteWorkerJobAssignment, IObserveWorkerJobAssignment
 	{

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UniRx;
 using Workshop.Domain.Work;
 
-namespace Workshop.UseCases.Work
+namespace Workshop.Models
 {
 
 	public class JobList : IObserveJobList, IReadJobList, IWriteJobList

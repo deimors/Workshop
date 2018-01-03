@@ -1,6 +1,7 @@
 ﻿using System;
 using Workshop.Domain.Work;
 using Workshop.Domain.Work.Concrete;
+using Workshop.Models;
 using Workshop.UseCases.Work;
 using Zenject;
 

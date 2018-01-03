@@ -2,8 +2,8 @@
 using UniRx;
 using UnityEngine;
 using Workshop.Domain.Work;
+using Workshop.Models;
 using Workshop.Presentation.Workers.Panel;
-using Workshop.UseCases.Work;
 using Zenject;
 
 namespace Workshop.Presentation.Workers

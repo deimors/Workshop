@@ -1,5 +1,5 @@
 ﻿using Workshop.Domain.Work;
-using Workshop.UseCases.Work;
+using Workshop.Models;
 using Zenject;
 
 namespace Workshop.Presentation.Jobs.Panel

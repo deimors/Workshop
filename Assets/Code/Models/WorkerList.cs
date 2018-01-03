@@ -1,13 +1,10 @@
-﻿using Assets.Code.UseCases.Work;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UniRx;
 using Workshop.Domain.Work;
 
-namespace Workshop.UseCases.Work
+namespace Workshop.Models
 {
 	public class WorkerList : IReadWorkerList, IWriteWorkerList, IObserveWorkerList
 	{

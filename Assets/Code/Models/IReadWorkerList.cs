@@ -1,8 +1,7 @@
-﻿using Assets.Code.UseCases.Work;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Workshop.Domain.Work;
 
-namespace Workshop.UseCases.Work
+namespace Workshop.Models
 {
 	public interface IReadWorkerList
 	{
