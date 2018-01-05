@@ -1,5 +1,6 @@
 ﻿using Workshop.Domain.Work;
 using Workshop.Models;
+using Workshop.UseCases.Work;
 using Zenject;
 
 namespace Workshop.Presentation.Workers.Panel
@@ -18,6 +19,8 @@ namespace Workshop.Presentation.Workers.Panel
 			Container.BindInstance(Identifier);
 
 			Container.Bind<IReadWorker>().FromResolveGetter<IReadWorkerList>(jobList => jobList[Identifier]);
+
+			Container.BindInterfacesTo<GetJobListDropdownOptions>().AsSingle();
 		}
 	}
 }

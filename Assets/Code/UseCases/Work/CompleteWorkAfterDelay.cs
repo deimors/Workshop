@@ -6,6 +6,7 @@ using Workshop.Models;
 
 namespace Workshop.UseCases.Work
 {
+
 	public class CompleteWorkAfterDelay : IPerformWork
 	{
 		private readonly TimeSpan _delay;
