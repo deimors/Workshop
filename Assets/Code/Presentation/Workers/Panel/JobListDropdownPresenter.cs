@@ -23,8 +23,6 @@ namespace Workshop.Presentation.Workers.Panel
 		
 		private IWriteWorkerJobAssignment _writeAssigments;
 
-		private readonly Dropdown.OptionData[] _noneOptionData = new[] { new Dropdown.OptionData("None") };
-
 		[Inject]
 		public void Setup(IReadJobList readJobs, IObserveJobList observeJobs, IWriteWorkerJobAssignment writeAssignments, IObserveWorkerJobAssignment observeAssignments, IGetJobDropdownOptions dropdownOptions)
 		{

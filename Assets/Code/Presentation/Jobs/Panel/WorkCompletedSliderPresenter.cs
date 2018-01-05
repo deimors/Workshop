@@ -2,6 +2,7 @@
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
+using Workshop.Domain.Work;
 using Workshop.Models;
 using Zenject;
 
@@ -14,10 +15,14 @@ namespace Workshop.Presentation.Jobs.Panel
 
 		[Inject]
 		public void Initialize(IReadJob workModel)
-		{
-			workModel.Status
-				.Select(job => job.Completed / job.Total)
-				.Subscribe(percentage => _completedSlider.value = percentage);
-		}
+			=> workModel.Value
+				.Select(GetPercentageComplete)
+				.Subscribe(SetSliderValue);
+		
+		private static float GetPercentageComplete(Job job) 
+			=> job.Status.Completed / job.Status.Total;
+
+		private void SetSliderValue(float percentage)
+			=> _completedSlider.value = percentage;
 	}
 }

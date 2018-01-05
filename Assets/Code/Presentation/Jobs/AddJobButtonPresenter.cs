@@ -16,11 +16,12 @@ namespace Workshop.Presentation.Jobs
 		private float _quantityOfWork = 5;
 
 		[Inject]
-		public void Initialize(IWriteJobList jobList)
-		{
-			_addButton.onClick
+		public void Initialize(IWriteJobList jobList) 
+			=> _addButton.onClick
 				.AsObservable()
-				.Subscribe(_ => jobList.Add(JobStatus.Create(new JobIdentifier(), _quantityOfWork * QuantityOfWork.Unit)));
-		}
+				.Subscribe(_ => jobList.Add(CreateNewJob()));
+
+		private Job CreateNewJob() 
+			=> new Job(new JobIdentifier(), JobStatus.Create(_quantityOfWork * QuantityOfWork.Unit));
 	}
 }

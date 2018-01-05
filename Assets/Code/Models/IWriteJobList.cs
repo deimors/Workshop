@@ -4,7 +4,7 @@ namespace Workshop.Models
 {
 	public interface IWriteJobList
 	{
-		void Add(JobStatus job);
+		void Add(Job job);
 
 		void Remove(JobIdentifier jobIdentifier);
 

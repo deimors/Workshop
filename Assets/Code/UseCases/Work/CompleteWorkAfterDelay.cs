@@ -35,10 +35,10 @@ namespace Workshop.UseCases.Work
 			_writeModel.Busy = true;
 
 			Observable.Timer(_delay)
-				.WithLatestFrom(_readModel.Status, (_, currentJob) => currentJob)
-				.Select(currentJob => _workOnJob.ApplyEffort(currentJob, new QuantityOfEffort()))
+				.WithLatestFrom(_readModel.Value, (_, currentJob) => currentJob)
+				.Select(currentJob => new { Job = currentJob, NewStatus = _workOnJob.ApplyEffort(currentJob.Status, new QuantityOfEffort()) })
 				.Do(_ => _writeModel.Busy = false)
-				.Subscribe(newJob => _writeModel.Status = newJob);
+				.Subscribe(pair => _writeModel.Value = pair.Job.With(status: s => pair.NewStatus));
 		}
 	}
 }

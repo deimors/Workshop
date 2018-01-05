@@ -5,7 +5,7 @@ namespace Workshop.Domain.Work.Concrete.Tests
 {
 	public class ApplyConstantWorkToJobTestFixture
 	{
-		protected JobStatus Job = new JobStatus(new JobIdentifier(), QuantityOfWork.Unit, QuantityOfWork.None);
+		protected JobStatus Job = new JobStatus(QuantityOfWork.Unit, QuantityOfWork.None);
 
 		protected QuantityOfEffort Effort = new QuantityOfEffort();
 

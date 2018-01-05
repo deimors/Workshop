@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workshop.Domain.Work.Concre
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workshop.Domain.Work.Tests", "Workshop.Domain.Work.Tests\Workshop.Domain.Work.Tests.csproj", "{AEDC0D4C-BBDA-4DB0-8BAE-5F4DCE4F9D4A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workshop.Core", "Workshop.Core\Workshop.Core.csproj", "{3586C58F-AD2D-4CFB-A195-75F825F419BC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{AEDC0D4C-BBDA-4DB0-8BAE-5F4DCE4F9D4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AEDC0D4C-BBDA-4DB0-8BAE-5F4DCE4F9D4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AEDC0D4C-BBDA-4DB0-8BAE-5F4DCE4F9D4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3586C58F-AD2D-4CFB-A195-75F825F419BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3586C58F-AD2D-4CFB-A195-75F825F419BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3586C58F-AD2D-4CFB-A195-75F825F419BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3586C58F-AD2D-4CFB-A195-75F825F419BC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

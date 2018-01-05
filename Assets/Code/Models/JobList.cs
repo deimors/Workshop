@@ -8,12 +8,12 @@ namespace Workshop.Models
 
 	public class JobList : IObserveJobList, IReadJobList, IWriteJobList
 	{
-		private readonly IReactiveDictionary<JobIdentifier, Job> _jobs = new ReactiveDictionary<JobIdentifier, Job>();
-		private IReadOnlyReactiveDictionary<JobIdentifier, Job> _readJobs => _jobs;
+		private readonly IReactiveDictionary<JobIdentifier, JobModel> _jobs = new ReactiveDictionary<JobIdentifier, JobModel>();
+		private IReadOnlyReactiveDictionary<JobIdentifier, JobModel> _readJobs => _jobs;
 
-		IReadJob IReadJobList.this[JobIdentifier job] => _readJobs[job];
+		IReadJob IReadJobList.this[JobIdentifier jobId] => _readJobs[jobId];
 
-		IWriteJob IWriteJobList.this[JobIdentifier job] => _readJobs[job];
+		IWriteJob IWriteJobList.this[JobIdentifier jobId] => _readJobs[jobId];
 
 		public IObservable<JobIdentifier> ObserveAdd
 			=> _jobs.ObserveAdd().Select(addEvent => addEvent.Key);
@@ -25,10 +25,10 @@ namespace Workshop.Models
 
 		public IEnumerable<IReadJob> Values => _jobs.Values;
 
-		public void Add(JobStatus job) 
-			=> _jobs.Add(job.Id, new Job(job));
+		public void Add(Job job) 
+			=> _jobs.Add(job.Id, new JobModel(job));
 
-		public void Remove(JobIdentifier job) 
-			=> _jobs.Remove(job);
+		public void Remove(JobIdentifier jobId) 
+			=> _jobs.Remove(jobId);
 	}
 }

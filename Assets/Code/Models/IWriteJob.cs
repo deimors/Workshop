@@ -4,7 +4,7 @@ namespace Workshop.Models
 {
 	public interface IWriteJob
 	{
-		JobStatus Status { set; }
+		Job Value { set; }
 
 		bool Busy { set; }
 	}

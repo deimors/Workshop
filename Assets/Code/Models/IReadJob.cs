@@ -6,7 +6,7 @@ namespace Workshop.Models
 {
 	public interface IReadJob
 	{
-		IObservable<JobStatus> Status { get; }
+		IObservable<Job> Value { get; }
 
 		IObservable<bool> Busy { get; }
 	}
