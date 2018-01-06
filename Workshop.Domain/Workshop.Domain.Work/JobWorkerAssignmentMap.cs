@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using Workshop.Core;
 
 namespace Workshop.Domain.Work
 {
@@ -21,14 +22,10 @@ namespace Workshop.Domain.Work
 		}
 
 		public Maybe<JobIdentifier> this[WorkerIdentifier worker] 
-			=> _assignmentsByWorker.ContainsKey(worker)
-				? _assignmentsByWorker[worker].ToMaybe()
-				: Maybe<JobIdentifier>.Nothing;
+			=> _assignmentsByWorker.Lookup(worker);
 
 		public Maybe<WorkerIdentifier> this[JobIdentifier job] 
-			=> _assignmentsByJob.ContainsKey(job)
-				? _assignmentsByJob[job].ToMaybe()
-				: Maybe<WorkerIdentifier>.Nothing;
+			=> _assignmentsByJob.Lookup(job);
 
 		public JobWorkerAssignmentMap WithAssignment(JobIdentifier job, WorkerIdentifier worker) 
 			=> new JobWorkerAssignmentMap(
