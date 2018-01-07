@@ -24,8 +24,8 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		protected void Arrange_EventHistory(params WorkshopEvent[] events)
 			=> _sut.LoadFromHistory(events);
 
-		protected Maybe<WorkshopError> Act_AddWorker(WorkerIdentifier workerId)
-			=> _sut.AddWorker(workerId);
+		protected Maybe<WorkshopError> Act_AddWorker(Worker worker)
+			=> _sut.AddWorker(worker);
 
 		protected Maybe<WorkshopError> Act_AddJob(Job job)
 			=> _sut.AddJob(job);
@@ -49,18 +49,18 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 	public class WhenNoWorkers : WorkshopAggregateTestFixture
 	{
 		[Theory, AutoData]
-		public void AddWorker_Succeeds(WorkerIdentifier workerId)
+		public void AddWorker_Succeeds(Worker worker)
 		{
-			Act_AddWorker(workerId)
+			Act_AddWorker(worker)
 				.Assert_Succeeds();
 		}
 
 		[Theory, AutoData]
-		public void AddWorker_UncommittedContainsWorkerAddedEvent(WorkerIdentifier workerId)
+		public void AddWorker_UncommittedContainsWorkerAddedEvent(Worker worker)
 		{
-			Act_AddWorker(workerId);
+			Act_AddWorker(worker);
 
-			Assert_UncommittedEventsContains(new WorkshopEvent.WorkerAdded(workerId));
+			Assert_UncommittedEventsContains(new WorkshopEvent.WorkerAdded(worker));
 		}
 
 		[Theory, WorkAutoData]
@@ -88,7 +88,7 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 
 	public class AfterWorkerAdded : WorkshopAggregateTestFixture
 	{
-		private readonly WorkerIdentifier _addedWorker = new WorkerIdentifier();
+		private readonly Worker _addedWorker = StaticFixture.Create<Worker>();
 
 		public AfterWorkerAdded()
 		{
@@ -105,14 +105,14 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		}
 
 		[Theory, AutoData]
-		public void AddAnotherWorker_Succeeds(WorkerIdentifier anotherWorker)
+		public void AddAnotherWorker_Succeeds(Worker anotherWorker)
 		{
 			Act_AddWorker(anotherWorker)
 				.Assert_Succeeds();
 		}
 
 		[Theory, AutoData]
-		public void AddAnotherWorker_UncommittedContainsAddAnotherWorkerEvent(WorkerIdentifier anotherWorker)
+		public void AddAnotherWorker_UncommittedContainsAddAnotherWorkerEvent(Worker anotherWorker)
 		{
 			Act_AddWorker(anotherWorker);
 
@@ -122,7 +122,7 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		[Theory, WorkAutoData]
 		public void AssignAddedWorkerToSomeJob_FailsWithUnknownJob(Job someJob)
 		{
-			Act_AssignJob(_addedWorker, someJob.Id)
+			Act_AssignJob(_addedWorker.Id, someJob.Id)
 				.Assert_FailsWith(WorkshopError.UnknownJob);
 		}
 	}
@@ -170,7 +170,7 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 
 	public class AfterJobAndWorkerAdded : WorkshopAggregateTestFixture
 	{
-		private readonly WorkerIdentifier _addedWorker = new WorkerIdentifier();
+		private readonly Worker _addedWorker = StaticFixture.Create<Worker>();
 		private readonly Job _addedJob = StaticFixture.Create<Job>();
 
 		public AfterJobAndWorkerAdded()
@@ -184,24 +184,24 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		[Fact]
 		public void AssignAddedJobToAddedWorker_Succeeds()
 		{
-			Act_AssignJob(_addedWorker, _addedJob.Id)
+			Act_AssignJob(_addedWorker.Id, _addedJob.Id)
 				.Assert_Succeeds();
 		}
 
 		[Fact]
 		public void AssignAddedJobToAddedWorker_UncommittedEventsContainsJobAssigned()
 		{
-			Act_AssignJob(_addedWorker, _addedJob.Id);
+			Act_AssignJob(_addedWorker.Id, _addedJob.Id);
 
 			Assert_UncommittedEventsContains(
-				new WorkshopEvent.JobAssigned(_addedWorker, _addedJob.Id)
+				new WorkshopEvent.JobAssigned(_addedWorker.Id, _addedJob.Id)
 			);
 		}
 	}
 
 	public class AfterJobAssignedToWorker : WorkshopAggregateTestFixture
 	{
-		private readonly WorkerIdentifier _addedWorker = new WorkerIdentifier();
+		private readonly Worker _addedWorker = StaticFixture.Create<Worker>();
 		private readonly Job _addedJob = StaticFixture.Create<Job>();
 
 		public AfterJobAssignedToWorker()
@@ -209,33 +209,33 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 			Arrange_EventHistory(
 				new WorkshopEvent.JobAdded(_addedJob),
 				new WorkshopEvent.WorkerAdded(_addedWorker),
-				new WorkshopEvent.JobAssigned(_addedWorker, _addedJob.Id)
+				new WorkshopEvent.JobAssigned(_addedWorker.Id, _addedJob.Id)
 			);
 		}
 
 		[Theory, AutoData]
-		public void AssignAddedJobToAnotherWorker_Succeeds(WorkerIdentifier anotherWorker)
+		public void AssignAddedJobToAnotherWorker_Succeeds(Worker anotherWorker)
 		{
 			Arrange_EventHistory(
 				new WorkshopEvent.WorkerAdded(anotherWorker)
 			);
 
-			Act_AssignJob(anotherWorker, _addedJob.Id)
+			Act_AssignJob(anotherWorker.Id, _addedJob.Id)
 				.Assert_Succeeds();
 		}
 
 		[Theory, AutoData]
-		public void AssignAddedJobToAnotherWorker_UncommittedEventsContainsAddedWorkerUnassignedAnotherWorkerAssigned(WorkerIdentifier anotherWorker)
+		public void AssignAddedJobToAnotherWorker_UncommittedEventsContainsAddedWorkerUnassignedAnotherWorkerAssigned(Worker anotherWorker)
 		{
 			Arrange_EventHistory(
 				new WorkshopEvent.WorkerAdded(anotherWorker)
 			);
 
-			Act_AssignJob(anotherWorker, _addedJob.Id);
+			Act_AssignJob(anotherWorker.Id, _addedJob.Id);
 
 			Assert_UncommittedEventsContains(
-				new WorkshopEvent.JobUnassigned(_addedWorker, _addedJob.Id),
-				new WorkshopEvent.JobAssigned(anotherWorker, _addedJob.Id)
+				new WorkshopEvent.JobUnassigned(_addedWorker.Id, _addedJob.Id),
+				new WorkshopEvent.JobAssigned(anotherWorker.Id, _addedJob.Id)
 			);
 		}
 
@@ -246,7 +246,7 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 				new WorkshopEvent.JobAdded(anotherJob)
 			);
 
-			Act_AssignJob(_addedWorker, anotherJob.Id)
+			Act_AssignJob(_addedWorker.Id, anotherJob.Id)
 				.Assert_Succeeds();
 		}
 
@@ -257,11 +257,11 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 				new WorkshopEvent.JobAdded(anotherJob)
 			);
 
-			Act_AssignJob(_addedWorker, anotherJob.Id);
+			Act_AssignJob(_addedWorker.Id, anotherJob.Id);
 
 			Assert_UncommittedEventsContains(
-				new WorkshopEvent.JobUnassigned(_addedWorker, _addedJob.Id),
-				new WorkshopEvent.JobAssigned(_addedWorker, anotherJob.Id)				
+				new WorkshopEvent.JobUnassigned(_addedWorker.Id, _addedJob.Id),
+				new WorkshopEvent.JobAssigned(_addedWorker.Id, anotherJob.Id)				
 			);
 		}
 	}

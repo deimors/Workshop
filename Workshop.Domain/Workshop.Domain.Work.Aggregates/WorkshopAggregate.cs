@@ -11,23 +11,23 @@ namespace Workshop.Domain.Work.Aggregates
 	{
 		public class WorkerAdded : WorkshopEvent, IEquatable<WorkerAdded>
 		{
-			public WorkerIdentifier WorkerId { get; }
+			public Worker Worker { get; }
 
-			public WorkerAdded(WorkerIdentifier workerId)
+			public WorkerAdded(Worker worker)
 			{
-				WorkerId = workerId ?? throw new ArgumentNullException(nameof(workerId));
+				Worker = worker ?? throw new ArgumentNullException(nameof(worker));
 			}
 
 			public override bool Equals(object obj) 
 				=> Equals(obj as WorkerAdded);
 
 			public bool Equals(WorkerAdded other) 
-				=> !(other is null) && WorkerId.Equals(other.WorkerId);
+				=> !(other is null) && Worker.Equals(other.Worker);
 
 			public override int GetHashCode()
 			{
 				var hashCode = -456856358;
-				hashCode = hashCode * -1521134295 + WorkerId.GetHashCode();
+				hashCode = hashCode * -1521134295 + Worker.GetHashCode();
 				return hashCode;
 			}
 
@@ -146,14 +146,14 @@ namespace Workshop.Domain.Work.Aggregates
 
 	public class WorkshopAggregate : AggregateRoot<WorkshopEvent>
 	{
-		private readonly ICollection<WorkerIdentifier> _workers = new HashSet<WorkerIdentifier>();
+		private readonly IDictionary<WorkerIdentifier, Worker> _workers = new Dictionary<WorkerIdentifier, Worker>();
 		private readonly IDictionary<JobIdentifier, Job> _jobs = new Dictionary<JobIdentifier, Job>();
 		private readonly IDictionary<JobIdentifier, WorkerIdentifier> _assignments = new Dictionary<JobIdentifier, WorkerIdentifier>();
 
-		public Maybe<WorkshopError> AddWorker(WorkerIdentifier workerId)
+		public Maybe<WorkshopError> AddWorker(Worker worker)
 			=> this.BuildCommand<WorkshopEvent, WorkshopError>()
-				.FailIf(() => _workers.Contains(workerId), () => WorkshopError.WorkerAlreadyAdded)
-				.Record(new WorkshopEvent.WorkerAdded(workerId))
+				.FailIf(() => _workers.ContainsKey(worker.Id), () => WorkshopError.WorkerAlreadyAdded)
+				.Record(new WorkshopEvent.WorkerAdded(worker))
 				.Execute();
 
 		public Maybe<WorkshopError> AddJob(Job job)
@@ -164,7 +164,7 @@ namespace Workshop.Domain.Work.Aggregates
 
 		public Maybe<WorkshopError> AssignJob(WorkerIdentifier workerId, JobIdentifier jobId) 
 			=> this.BuildCommand<WorkshopEvent, WorkshopError>()
-				.FailIf(() => !_workers.Contains(workerId), () => WorkshopError.UnknownWorker)
+				.FailIf(() => !_workers.ContainsKey(workerId), () => WorkshopError.UnknownWorker)
 				.FailIf(() => !_jobs.ContainsKey(jobId), () => WorkshopError.UnknownJob)
 				.RecordIf(() => _assignments.Values.Contains(workerId), () => new WorkshopEvent.JobUnassigned(workerId, _assignments.Single(pair => pair.Value == workerId).Key))
 				.RecordIf(() => _assignments.ContainsKey(jobId), () => new WorkshopEvent.JobUnassigned(_assignments[jobId], jobId))
@@ -173,7 +173,7 @@ namespace Workshop.Domain.Work.Aggregates
 
 		protected override void ApplyEvent(WorkshopEvent @event)
 			=> @event.Switch(
-				workerAdded => _workers.Add(workerAdded.WorkerId),
+				workerAdded => _workers.Add(workerAdded.Worker.Id, workerAdded.Worker),
 				jobAdded => _jobs.Add(jobAdded.Job.Id, jobAdded.Job),
 				jobAssigned => _assignments.Add(jobAssigned.JobId, jobAssigned.WorkerId),
 				jobUnassigned => _assignments.Remove(jobUnassigned.JobId)
