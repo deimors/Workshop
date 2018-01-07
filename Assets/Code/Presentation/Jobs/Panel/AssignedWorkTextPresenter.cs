@@ -1,9 +1,6 @@
-﻿using Functional.Maybe;
-using UniRx;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using Workshop.Domain.Work;
-using Workshop.Models;
 using Zenject;
 
 namespace Workshop.Presentation.Jobs.Panel
@@ -16,6 +13,7 @@ namespace Workshop.Presentation.Jobs.Panel
 		[Inject]
 		public JobIdentifier Identifier { get; }
 
+		/*
 		[Inject]
 		public void Setup(JobIdentifier job, IObserveWorkerJobAssignment observeAssignment)
 		{
@@ -28,5 +26,6 @@ namespace Workshop.Presentation.Jobs.Panel
 				worker => $"Assigned to {worker}",
 				() => "Unassigned"
 			);
+		*/
 	}
 }

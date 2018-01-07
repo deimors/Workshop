@@ -5,6 +5,8 @@ using Workshop.Domain.Work;
 using Workshop.Models;
 using Workshop.Presentation.Jobs.Panel;
 using Zenject;
+using System;
+using Workshop.Domain.Work.Aggregates;
 
 namespace Workshop.Presentation.Jobs
 {
@@ -15,11 +17,13 @@ namespace Workshop.Presentation.Jobs
 		private readonly IDictionary<JobIdentifier, IJobPanel> _jobPanels = new Dictionary<JobIdentifier, IJobPanel>();
 
 		[Inject]
-		public void Initialize(IObserveJobList jobList, JobPanel.Factory jobPanelFactory)
+		public void Initialize(IObservable<WorkshopEvent> workshopEvents, JobPanel.Factory jobPanelFactory)
 		{
 			_jobPanelFactory = jobPanelFactory;
 
-			jobList.ObserveAdd.Subscribe(OnJobAdded);
+			workshopEvents
+				.OfType<WorkshopEvent, WorkshopEvent.JobAdded>()
+				.Subscribe(jobAdded => OnJobAdded(jobAdded.Job.Id));
 		}
 
 		private void OnJobAdded(JobIdentifier jobId) 

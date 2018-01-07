@@ -144,7 +144,7 @@ namespace Workshop.Domain.Work.Aggregates
 		UnknownJob
 	}
 
-	public class Workshop : AggregateRoot<WorkshopEvent>
+	public class WorkshopAggregate : AggregateRoot<WorkshopEvent>
 	{
 		private readonly ICollection<WorkerIdentifier> _workers = new HashSet<WorkerIdentifier>();
 		private readonly IDictionary<JobIdentifier, Job> _jobs = new Dictionary<JobIdentifier, Job>();

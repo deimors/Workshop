@@ -13,6 +13,7 @@ namespace Workshop.Presentation.Jobs.Panel
 		[SerializeField]
 		private Slider _completedSlider;
 
+		/*
 		[Inject]
 		public void Initialize(IReadJob workModel)
 			=> workModel.Value
@@ -24,5 +25,6 @@ namespace Workshop.Presentation.Jobs.Panel
 
 		private void SetSliderValue(float percentage)
 			=> _completedSlider.value = percentage;
+		*/
 	}
 }

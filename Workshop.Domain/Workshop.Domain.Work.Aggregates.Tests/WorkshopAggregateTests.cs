@@ -8,17 +8,17 @@ using Xunit;
 
 namespace Workshop.Domain.Work.Aggregates.Tests
 {
-	public class WorkshopTestFixture
+	public class WorkshopAggregateTestFixture
 	{
-		private readonly Workshop _sut;
+		private readonly WorkshopAggregate _sut;
 
 		protected static readonly IFixture StaticFixture = new Fixture().Customize(new WorkDomainCustomization());
 
-		public WorkshopTestFixture()
+		public WorkshopAggregateTestFixture()
 		{
 			AssertionOptions.AssertEquivalencyUsing(EquivalencyOptions.OneOf);
 
-			_sut = new Workshop();
+			_sut = new WorkshopAggregate();
 		}
 
 		protected void Arrange_EventHistory(params WorkshopEvent[] events)
@@ -37,7 +37,7 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 			=> _sut.UncommittedEvents.Should().ContainInOrder(expected);
 	}
 
-	public static class WorkshopTestAssertionExtensions
+	public static class WorkshopAggregateTestAssertionExtensions
 	{
 		public static void Assert_Succeeds(this Maybe<WorkshopError> result)
 			=> result.Should().Be(Maybe<WorkshopError>.Nothing);
@@ -46,7 +46,7 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 			=> result.Should().Be(error.ToMaybe());
 	}
 
-	public class WhenNoWorkers : WorkshopTestFixture
+	public class WhenNoWorkers : WorkshopAggregateTestFixture
 	{
 		[Theory, AutoData]
 		public void AddWorker_Succeeds(WorkerIdentifier workerId)
@@ -86,7 +86,7 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		}
 	}
 
-	public class AfterWorkerAdded : WorkshopTestFixture
+	public class AfterWorkerAdded : WorkshopAggregateTestFixture
 	{
 		private readonly WorkerIdentifier _addedWorker = new WorkerIdentifier();
 
@@ -127,7 +127,7 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		}
 	}
 
-	public class AfterJobAdded : WorkshopTestFixture
+	public class AfterJobAdded : WorkshopAggregateTestFixture
 	{
 		private readonly Job _addedJob = StaticFixture.Create<Job>();
 
@@ -168,7 +168,7 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		}
 	}
 
-	public class AfterJobAndWorkerAdded : WorkshopTestFixture
+	public class AfterJobAndWorkerAdded : WorkshopAggregateTestFixture
 	{
 		private readonly WorkerIdentifier _addedWorker = new WorkerIdentifier();
 		private readonly Job _addedJob = StaticFixture.Create<Job>();
@@ -199,7 +199,7 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		}
 	}
 
-	public class AfterJobAssignedToWorker : WorkshopTestFixture
+	public class AfterJobAssignedToWorker : WorkshopAggregateTestFixture
 	{
 		private readonly WorkerIdentifier _addedWorker = new WorkerIdentifier();
 		private readonly Job _addedJob = StaticFixture.Create<Job>();

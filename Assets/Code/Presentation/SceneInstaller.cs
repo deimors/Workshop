@@ -1,4 +1,6 @@
 ﻿using System;
+using UniRx;
+using Workshop.Actors;
 using Workshop.Domain.Work;
 using Workshop.Domain.Work.Concrete;
 using Workshop.Models;
@@ -35,6 +37,11 @@ namespace Workshop.Presentation
 			Container
 				.BindInterfacesTo<AssignmentMap>()
 				.AsSingle();
+
+			Container
+				.BindInterfacesTo<WorkshopActor>()
+				.AsSingle()
+				.WithArguments(Observable.EveryUpdate().AsUnitObservable());
 		}
 	}
 }

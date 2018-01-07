@@ -1,8 +1,8 @@
 ﻿using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
+using Workshop.Actors;
 using Workshop.Domain.Work;
-using Workshop.Models;
 using Zenject;
 
 namespace Workshop.Presentation.Jobs
@@ -16,10 +16,14 @@ namespace Workshop.Presentation.Jobs
 		private float _quantityOfWork = 5;
 
 		[Inject]
-		public void Initialize(IWriteJobList jobList) 
+		public void Initialize(IQueueWorkshopCommands queueWorkshopCommands) 
 			=> _addButton.onClick
 				.AsObservable()
-				.Subscribe(_ => jobList.Add(CreateNewJob()));
+				.Select(_ => CreateAddJobCommand())
+				.Subscribe(queueWorkshopCommands.QueueCommand);
+
+		private WorkshopCommand CreateAddJobCommand()
+			=> new WorkshopCommand.AddJob(CreateNewJob());
 
 		private Job CreateNewJob() 
 			=> new Job(new JobIdentifier(), JobStatus.Create(_quantityOfWork * QuantityOfWork.Unit));
