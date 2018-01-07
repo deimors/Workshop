@@ -11,7 +11,7 @@ namespace Workshop.Core
 
 		public IEnumerable<TEvent> UncommittedEvents => _uncommittedEvents.AsEnumerable();
 
-		public void MarkCommitted() { }
+		public void MarkCommitted() => _uncommittedEvents.Clear();
 
 		public void LoadFromHistory(IEnumerable<TEvent> events)
 		{

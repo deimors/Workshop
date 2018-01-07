@@ -2,11 +2,12 @@
 using OneOf;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Workshop.Core;
 
 namespace Workshop.Domain.Work.Aggregates
 {
-	public class WorkshopEvent : OneOfBase<WorkshopEvent.WorkerAdded, WorkshopEvent.JobAdded>
+	public class WorkshopEvent : OneOfBase<WorkshopEvent.WorkerAdded, WorkshopEvent.JobAdded, WorkshopEvent.JobAssigned, WorkshopEvent.JobUnassigned>
 	{
 		public class WorkerAdded : WorkshopEvent, IEquatable<WorkerAdded>
 		{
@@ -14,7 +15,7 @@ namespace Workshop.Domain.Work.Aggregates
 
 			public WorkerAdded(WorkerIdentifier workerId)
 			{
-				WorkerId = workerId;
+				WorkerId = workerId ?? throw new ArgumentNullException(nameof(workerId));
 			}
 
 			public override bool Equals(object obj) 
@@ -43,7 +44,7 @@ namespace Workshop.Domain.Work.Aggregates
 
 			public JobAdded(Job job)
 			{
-				Job = job;
+				Job = job ?? throw new ArgumentNullException(nameof(job));
 			}
 
 			public override bool Equals(object obj) 
@@ -65,43 +66,117 @@ namespace Workshop.Domain.Work.Aggregates
 			public static bool operator !=(JobAdded added1, JobAdded added2) 
 				=> !(added1 == added2);
 		}
+
+		public class JobAssigned : WorkshopEvent, IEquatable<JobAssigned>
+		{
+			public WorkerIdentifier WorkerId { get; }
+			public JobIdentifier JobId { get; }
+
+			public JobAssigned(WorkerIdentifier workerId, JobIdentifier jobId)
+			{
+				WorkerId = workerId ?? throw new ArgumentNullException(nameof(workerId));
+				JobId = jobId ?? throw new ArgumentNullException(nameof(jobId));
+			}
+
+			public override bool Equals(object obj) 
+				=> Equals(obj as JobAssigned);
+
+			public bool Equals(JobAssigned other) 
+				=> !(other is null) 
+				&& WorkerId.Equals(other.WorkerId) 
+				&& JobId.Equals(other.JobId);
+
+			public override int GetHashCode()
+			{
+				var hashCode = -217597125;
+				hashCode = hashCode * -1521134295 + WorkerId.GetHashCode();
+				hashCode = hashCode * -1521134295 + JobId.GetHashCode();
+				return hashCode;
+			}
+
+			public static bool operator ==(JobAssigned assigned1, JobAssigned assigned2) 
+				=> assigned1?.Equals(assigned2) ?? (assigned2 is null);
+
+			public static bool operator !=(JobAssigned assigned1, JobAssigned assigned2) 
+				=> !(assigned1 == assigned2);
+		}
+
+		public class JobUnassigned : WorkshopEvent, IEquatable<JobUnassigned>
+		{
+			public WorkerIdentifier WorkerId { get; }
+			public JobIdentifier JobId { get; }
+
+			public JobUnassigned(WorkerIdentifier workerId, JobIdentifier jobId)
+			{
+				WorkerId = workerId ?? throw new ArgumentNullException(nameof(workerId));
+				JobId = jobId ?? throw new ArgumentNullException(nameof(jobId));
+			}
+
+			public override bool Equals(object obj) 
+				=> Equals(obj as JobUnassigned);
+
+			public bool Equals(JobUnassigned other) 
+				=> !(other is null)
+				&& WorkerId.Equals(other.WorkerId)
+				&& JobId.Equals(other.JobId);
+
+			public override int GetHashCode()
+			{
+				var hashCode = -217597125;
+				hashCode = hashCode * -1521134295 + WorkerId.GetHashCode();
+				hashCode = hashCode * -1521134295 + JobId.GetHashCode();
+				return hashCode;
+			}
+
+			public static bool operator ==(JobUnassigned unassigned1, JobUnassigned unassigned2) 
+				=> unassigned1?.Equals(unassigned2) ?? (unassigned2 is null);
+
+			public static bool operator !=(JobUnassigned unassigned1, JobUnassigned unassigned2) 
+				=> !(unassigned1 == unassigned2);
+		}
 	}
 
 	public enum WorkshopError
 	{
 		WorkerAlreadyAdded,
-		JobAlreadyAdded
+		JobAlreadyAdded,
+		UnknownWorker,
+		UnknownJob
 	}
 
 	public class Workshop : AggregateRoot<WorkshopEvent>
 	{
 		private readonly ICollection<WorkerIdentifier> _workers = new HashSet<WorkerIdentifier>();
 		private readonly IDictionary<JobIdentifier, Job> _jobs = new Dictionary<JobIdentifier, Job>();
+		private readonly IDictionary<JobIdentifier, WorkerIdentifier> _assignments = new Dictionary<JobIdentifier, WorkerIdentifier>();
 
 		public Maybe<WorkshopError> AddWorker(WorkerIdentifier workerId)
-		{
-			if (_workers.Contains(workerId))
-				return WorkshopError.WorkerAlreadyAdded.ToMaybe();
-			
-			Record(new WorkshopEvent.WorkerAdded(workerId));
-
-			return Maybe<WorkshopError>.Nothing;
-		}
+			=> this.BuildCommand<WorkshopEvent, WorkshopError>()
+				.FailIf(() => _workers.Contains(workerId), () => WorkshopError.WorkerAlreadyAdded)
+				.Record(new WorkshopEvent.WorkerAdded(workerId))
+				.Execute();
 
 		public Maybe<WorkshopError> AddJob(Job job)
-		{
-			if (_jobs.ContainsKey(job.Id))
-				return WorkshopError.JobAlreadyAdded.ToMaybe();
+			=> this.BuildCommand<WorkshopEvent, WorkshopError>()
+				.FailIf(() => _jobs.ContainsKey(job.Id), () => WorkshopError.JobAlreadyAdded)
+				.Record(new WorkshopEvent.JobAdded(job))
+				.Execute();
 
-			Record(new WorkshopEvent.JobAdded(job));
-
-			return Maybe<WorkshopError>.Nothing;
-		}
+		public Maybe<WorkshopError> AssignJob(WorkerIdentifier workerId, JobIdentifier jobId) 
+			=> this.BuildCommand<WorkshopEvent, WorkshopError>()
+				.FailIf(() => !_workers.Contains(workerId), () => WorkshopError.UnknownWorker)
+				.FailIf(() => !_jobs.ContainsKey(jobId), () => WorkshopError.UnknownJob)
+				.RecordIf(() => _assignments.Values.Contains(workerId), () => new WorkshopEvent.JobUnassigned(workerId, _assignments.Single(pair => pair.Value == workerId).Key))
+				.RecordIf(() => _assignments.ContainsKey(jobId), () => new WorkshopEvent.JobUnassigned(_assignments[jobId], jobId))
+				.Record(new WorkshopEvent.JobAssigned(workerId, jobId))
+				.Execute();
 
 		protected override void ApplyEvent(WorkshopEvent @event)
 			=> @event.Switch(
 				workerAdded => _workers.Add(workerAdded.WorkerId),
-				jobAdded => _jobs.Add(jobAdded.Job.Id, jobAdded.Job)
+				jobAdded => _jobs.Add(jobAdded.Job.Id, jobAdded.Job),
+				jobAssigned => _assignments.Add(jobAssigned.JobId, jobAssigned.WorkerId),
+				jobUnassigned => _assignments.Remove(jobUnassigned.JobId)
 			);
 	}
 }
