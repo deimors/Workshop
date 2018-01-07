@@ -1,10 +1,12 @@
 ﻿using Functional.Maybe;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 using Workshop.Domain.Work;
+using Workshop.Domain.Work.Aggregates;
 using Workshop.Models;
 using Workshop.UseCases.Work;
 using Zenject;
@@ -23,6 +25,15 @@ namespace Workshop.Presentation.Workers.Panel
 		
 		private IWriteWorkerJobAssignment _writeAssigments;
 		
+		[Inject]
+		public void NewSetup(IObservable<WorkshopEvent> workshopEvents)
+		{
+			workshopEvents
+				.OfType<WorkshopEvent, WorkshopEvent.JobAdded>()
+				.Do(jobAdded => AddJobOption(new JobDropdownOption(jobAdded.Job.Id)))
+				.Subscribe(_ => UpdateDropdownOptions());
+		}
+
 		//[Inject]
 		public void Setup(IReadJobList readJobs, IObserveJobList observeJobs, IWriteWorkerJobAssignment writeAssignments, IObserveWorkerJobAssignment observeAssignments, IGetJobDropdownOptions dropdownOptions)
 		{
