@@ -26,36 +26,24 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 
 		protected Maybe<WorkshopError> Act_AddWorker(WorkerIdentifier workerId)
 			=> _sut.AddWorker(workerId);
-		
-		protected void ActAssert_AddWorkerSucceeds(WorkerIdentifier workerId)
-			=> Act_AddWorker(workerId).Should().Be(Maybe<WorkshopError>.Nothing);
-
-		protected void ActAssert_AddWorkerFailsWith(WorkerIdentifier workerId, WorkshopError expected)
-			=> Act_AddWorker(workerId).Should().Be(expected.ToMaybe());
 
 		protected Maybe<WorkshopError> Act_AddJob(Job job)
 			=> _sut.AddJob(job);
 
-		protected void ActAssert_AddJobSucceeds(Job job)
-			=> Act_AddJob(job).Should().Be(Maybe<WorkshopError>.Nothing);
-
-		protected void ActAssert_AddJobFailsWith(Job job, WorkshopError expected)
-			=> Act_AddJob(job).Should().Be(expected.ToMaybe());
-
 		protected Maybe<WorkshopError> Act_AssignJob(WorkerIdentifier workerId, JobIdentifier jobId)
 			=> _sut.AssignJob(workerId, jobId);
-
-		protected void ActAssert_AssignJobSucceeds(WorkerIdentifier workerId, JobIdentifier jobId)
-			=> Act_AssignJob(workerId, jobId).Should().Be(Maybe<WorkshopError>.Nothing);
-
-		protected void ActAssert_AssignJobFailsWith(WorkerIdentifier workerId, JobIdentifier jobId, WorkshopError expected)
-			=> Act_AssignJob(workerId, jobId).Should().Be(expected.ToMaybe());
-
-		protected void Assert_UncommittedContainsEvent(WorkshopEvent expected)
-			=> _sut.UncommittedEvents.Should().Contain(expected);
-
+		
 		protected void Assert_UncommittedEventsContains(params WorkshopEvent[] expected)
-			=> _sut.UncommittedEvents.Should().Contain(expected);
+			=> _sut.UncommittedEvents.Should().ContainInOrder(expected);
+	}
+
+	public static class WorkshopTestAssertionExtensions
+	{
+		public static void Assert_Succeeds(this Maybe<WorkshopError> result)
+			=> result.Should().Be(Maybe<WorkshopError>.Nothing);
+
+		public static void Assert_FailsWith(this Maybe<WorkshopError> result, WorkshopError error)
+			=> result.Should().Be(error.ToMaybe());
 	}
 
 	public class WhenNoWorkers : WorkshopTestFixture
@@ -63,7 +51,8 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		[Theory, AutoData]
 		public void AddWorker_Succeeds(WorkerIdentifier workerId)
 		{
-			ActAssert_AddWorkerSucceeds(workerId);
+			Act_AddWorker(workerId)
+				.Assert_Succeeds();
 		}
 
 		[Theory, AutoData]
@@ -71,13 +60,14 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		{
 			Act_AddWorker(workerId);
 
-			Assert_UncommittedContainsEvent(new WorkshopEvent.WorkerAdded(workerId));
+			Assert_UncommittedEventsContains(new WorkshopEvent.WorkerAdded(workerId));
 		}
 
 		[Theory, WorkAutoData]
 		public void AddJob_Succeeds(Job job)
 		{
-			ActAssert_AddJobSucceeds(job);
+			Act_AddJob(job)
+				.Assert_Succeeds();
 		}
 
 		[Theory, WorkAutoData]
@@ -85,13 +75,14 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		{
 			Act_AddJob(job);
 
-			Assert_UncommittedContainsEvent(new WorkshopEvent.JobAdded(job));
+			Assert_UncommittedEventsContains(new WorkshopEvent.JobAdded(job));
 		}
 
 		[Theory, WorkAutoData]
 		public void AssignSomeWorkerToSomeJob_FailsWithUnknownWorker(WorkerIdentifier someWorker, Job someJob)
 		{
-			ActAssert_AssignJobFailsWith(someWorker, someJob.Id, WorkshopError.UnknownWorker);
+			Act_AssignJob(someWorker, someJob.Id)
+				.Assert_FailsWith(WorkshopError.UnknownWorker);
 		}
 	}
 
@@ -109,13 +100,15 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		[Fact]
 		public void AddAddedWorker_FailsWithWorkerAlreadyAdded()
 		{
-			ActAssert_AddWorkerFailsWith(_addedWorker, WorkshopError.WorkerAlreadyAdded);
+			Act_AddWorker(_addedWorker)
+				.Assert_FailsWith(WorkshopError.WorkerAlreadyAdded);
 		}
 
 		[Theory, AutoData]
 		public void AddAnotherWorker_Succeeds(WorkerIdentifier anotherWorker)
 		{
-			ActAssert_AddWorkerSucceeds(anotherWorker);
+			Act_AddWorker(anotherWorker)
+				.Assert_Succeeds();
 		}
 
 		[Theory, AutoData]
@@ -129,7 +122,8 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		[Theory, WorkAutoData]
 		public void AssignAddedWorkerToSomeJob_FailsWithUnknownJob(Job someJob)
 		{
-			ActAssert_AssignJobFailsWith(_addedWorker, someJob.Id, WorkshopError.UnknownJob);
+			Act_AssignJob(_addedWorker, someJob.Id)
+				.Assert_FailsWith(WorkshopError.UnknownJob);
 		}
 	}
 
@@ -147,13 +141,15 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		[Fact]
 		public void AddAddedJob_FailsWithJobAlreadyAdded()
 		{
-			ActAssert_AddJobFailsWith(_addedJob, WorkshopError.JobAlreadyAdded);
+			Act_AddJob(_addedJob)
+				.Assert_FailsWith(WorkshopError.JobAlreadyAdded);
 		}
 
 		[Theory, WorkAutoData]
 		public void AddAnotherJob_Succeeds(Job anotherJob)
 		{
-			ActAssert_AddJobSucceeds(anotherJob);
+			Act_AddJob(anotherJob)
+				.Assert_Succeeds();
 		}
 
 		[Theory, WorkAutoData]
@@ -167,7 +163,8 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		[Theory, AutoData]
 		public void AssignSomeWorkerToAddedJob_FailsWithUnknownWorker(WorkerIdentifier someWorker)
 		{
-			ActAssert_AssignJobFailsWith(someWorker, _addedJob.Id, WorkshopError.UnknownWorker);
+			Act_AssignJob(someWorker, _addedJob.Id)
+				.Assert_FailsWith(WorkshopError.UnknownWorker);
 		}
 	}
 
@@ -187,7 +184,8 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		[Fact]
 		public void AssignAddedJobToAddedWorker_Succeeds()
 		{
-			ActAssert_AssignJobSucceeds(_addedWorker, _addedJob.Id);
+			Act_AssignJob(_addedWorker, _addedJob.Id)
+				.Assert_Succeeds();
 		}
 
 		[Fact]
@@ -222,7 +220,8 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 				new WorkshopEvent.WorkerAdded(anotherWorker)
 			);
 
-			ActAssert_AssignJobSucceeds(anotherWorker, _addedJob.Id);
+			Act_AssignJob(anotherWorker, _addedJob.Id)
+				.Assert_Succeeds();
 		}
 
 		[Theory, AutoData]
@@ -247,7 +246,8 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 				new WorkshopEvent.JobAdded(anotherJob)
 			);
 
-			ActAssert_AssignJobSucceeds(_addedWorker, anotherJob.Id);
+			Act_AssignJob(_addedWorker, anotherJob.Id)
+				.Assert_Succeeds();
 		}
 
 		[Theory, WorkAutoData]
@@ -261,7 +261,7 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 
 			Assert_UncommittedEventsContains(
 				new WorkshopEvent.JobUnassigned(_addedWorker, _addedJob.Id),
-				new WorkshopEvent.JobAssigned(_addedWorker, anotherJob.Id)
+				new WorkshopEvent.JobAssigned(_addedWorker, anotherJob.Id)				
 			);
 		}
 	}
