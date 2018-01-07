@@ -1,9 +1,8 @@
 ﻿using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
+using Workshop.Actors;
 using Workshop.Domain.Work;
-using Workshop.Models;
-using Workshop.UseCases.Work;
 using Zenject;
 
 namespace Workshop.Presentation.Workers
@@ -14,11 +13,18 @@ namespace Workshop.Presentation.Workers
 		private Button _addButton;
 		
 		[Inject]
-		public void Initialize(IWriteWorkerList workerList)
+		public void Initialize(IQueueWorkshopCommands queueWorkshopCommands)
 		{
 			_addButton.onClick
 				.AsObservable()
-				.Subscribe(_ => workerList.Add(new WorkerIdentifier()));
+				.Select(_ => CreateAddWorkerCommand())
+				.Subscribe(queueWorkshopCommands.QueueCommand);
 		}
+
+		private WorkshopCommand CreateAddWorkerCommand()
+			=> new WorkshopCommand.AddWorker(CreateNewWorker());
+
+		private Worker CreateNewWorker()
+			=> new Worker(new WorkerIdentifier());
 	}
 }

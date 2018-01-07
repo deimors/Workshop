@@ -13,11 +13,11 @@ namespace Workshop.Actors
 	{
 		public class AddWorker : WorkshopCommand
 		{
-			public WorkerIdentifier WorkerId { get; }
+			public Worker Worker { get; }
 
-			public AddWorker(WorkerIdentifier workerId)
+			public AddWorker(Worker worker)
 			{
-				WorkerId = workerId;
+				Worker = worker;
 			}
 		}
 
@@ -82,7 +82,7 @@ namespace Workshop.Actors
 
 		private Maybe<WorkshopError> HandleCommand(WorkshopCommand command)
 			=> command.Match(
-				addWorker => _workshopAggregate.AddWorker(addWorker.WorkerId),
+				addWorker => _workshopAggregate.AddWorker(addWorker.Worker),
 				addJob => _workshopAggregate.AddJob(addJob.Job)
 			);
 

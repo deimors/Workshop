@@ -22,8 +22,8 @@ namespace Workshop.Presentation.Workers.Panel
 		private readonly IDictionary<Dropdown.OptionData, JobDropdownOption> _jobOptions = new Dictionary<Dropdown.OptionData, JobDropdownOption>();
 		
 		private IWriteWorkerJobAssignment _writeAssigments;
-
-		[Inject]
+		
+		//[Inject]
 		public void Setup(IReadJobList readJobs, IObserveJobList observeJobs, IWriteWorkerJobAssignment writeAssignments, IObserveWorkerJobAssignment observeAssignments, IGetJobDropdownOptions dropdownOptions)
 		{
 			_writeAssigments = writeAssignments;

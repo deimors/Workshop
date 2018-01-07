@@ -2,9 +2,11 @@
 using UniRx;
 using UnityEngine;
 using Workshop.Domain.Work;
+using Workshop.Domain.Work.Aggregates;
 using Workshop.Models;
 using Workshop.Presentation.Workers.Panel;
 using Zenject;
+using System;
 
 namespace Workshop.Presentation.Workers
 {
@@ -15,11 +17,13 @@ namespace Workshop.Presentation.Workers
 		private readonly IDictionary<WorkerIdentifier, WorkerPanel> _workerPanels = new Dictionary<WorkerIdentifier, WorkerPanel>();
 
 		[Inject]
-		public void Initialize(IObserveWorkerList workerList, WorkerPanel.Factory workerPanelFactory)
+		public void Initialize(IObservable<WorkshopEvent> workshopEvents, WorkerPanel.Factory workerPanelFactory)
 		{
 			_workerPanelFactory = workerPanelFactory;
 
-			workerList.ObserveAdd.Subscribe(OnWorkerAdded);
+			workshopEvents
+				.OfType<WorkshopEvent, WorkshopEvent.WorkerAdded>()
+				.Subscribe(workerAdded => OnWorkerAdded(workerAdded.Worker.Id));
 		}
 
 		private void OnWorkerAdded(WorkerIdentifier workerId)
