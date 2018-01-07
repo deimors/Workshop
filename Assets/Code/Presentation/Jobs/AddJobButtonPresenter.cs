@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Workshop.Actors;
 using Workshop.Domain.Work;
+using Workshop.Domain.Work.Aggregates;
 using Zenject;
 
 namespace Workshop.Presentation.Jobs

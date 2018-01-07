@@ -5,6 +5,7 @@ using System.Linq;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
+using Workshop.Actors;
 using Workshop.Domain.Work;
 using Workshop.Domain.Work.Aggregates;
 using Workshop.Models;
@@ -22,16 +23,26 @@ namespace Workshop.Presentation.Workers.Panel
 		public WorkerIdentifier WorkerIdentifier { get; }
 
 		private readonly IDictionary<Dropdown.OptionData, JobDropdownOption> _jobOptions = new Dictionary<Dropdown.OptionData, JobDropdownOption>();
-		
+
 		private IWriteWorkerJobAssignment _writeAssigments;
-		
+
 		[Inject]
 		public void NewSetup(IObservable<WorkshopEvent> workshopEvents)
 		{
+			AddJobOption(JobDropdownOption.None);
+
+			UpdateDropdownOptions();
+
 			workshopEvents
 				.OfType<WorkshopEvent, WorkshopEvent.JobAdded>()
 				.Do(jobAdded => AddJobOption(new JobDropdownOption(jobAdded.Job.Id)))
 				.Subscribe(_ => UpdateDropdownOptions());
+
+			_jobListDropdown.onValueChanged
+				.AsObservable()
+				.Select(selectedIndex => _jobListDropdown.options[selectedIndex])
+				.Select(GetJobIdentifierFromOptionData)
+				.Subscribe(maybeJobId => maybeJobId.Match(jobId => { }, () => { }));
 		}
 
 		//[Inject]
@@ -59,7 +70,7 @@ namespace Workshop.Presentation.Workers.Panel
 				.Subscribe(_ => _jobListDropdown.value = 0);
 		}
 
-		private void AddJobOption(JobDropdownOption jobOption) 
+		private void AddJobOption(JobDropdownOption jobOption)
 			=> _jobOptions[new Dropdown.OptionData(jobOption.ToString())] = jobOption;
 
 		private void UpdateDropdownOptions()
@@ -69,6 +80,12 @@ namespace Workshop.Presentation.Workers.Panel
 		}
 
 		private void OnOptionSelected(Dropdown.OptionData option)
-			=> _writeAssigments[WorkerIdentifier] = _jobOptions.Lookup(option).Select(jobOption => jobOption.Job);
+			=> _writeAssigments[WorkerIdentifier] = GetJobIdentifierFromOptionData(option);
+
+		private WorkshopCommand CreateAssignJobCommand(JobIdentifier jobIdentifier)
+			=> new WorkshopCommand.AssignJob(jobIdentifier, WorkerIdentifier);
+
+		private Maybe<JobIdentifier> GetJobIdentifierFromOptionData(Dropdown.OptionData option) 
+			=> _jobOptions.Lookup(option).Select(jobOption => jobOption.Job);
 	}
 }

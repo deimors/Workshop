@@ -9,29 +9,6 @@ using Workshop.Domain.Work.Aggregates;
 
 namespace Workshop.Actors
 {
-	public class WorkshopCommand : OneOfBase<WorkshopCommand.AddWorker, WorkshopCommand.AddJob>
-	{
-		public class AddWorker : WorkshopCommand
-		{
-			public Worker Worker { get; }
-
-			public AddWorker(Worker worker)
-			{
-				Worker = worker;
-			}
-		}
-
-		public class AddJob : WorkshopCommand
-		{
-			public Job Job { get; }
-
-			public AddJob(Job job)
-			{
-				Job = job;
-			}
-		}
-	}
-
 	public class WorkshopCommandException : Exception
 	{
 		public WorkshopCommand Command { get; }
@@ -76,15 +53,14 @@ namespace Workshop.Actors
 		{
 			WorkshopCommand command;
 
-			if (_commandQueue.TryDequeue(out command))
-				HandleCommand(command).Match(error => HandleError(command, error), CommitEvents);
+			while (_commandQueue.TryDequeue(out command))
+				ProcessCommand(command);
 		}
 
-		private Maybe<WorkshopError> HandleCommand(WorkshopCommand command)
-			=> command.Match(
-				addWorker => _workshopAggregate.AddWorker(addWorker.Worker),
-				addJob => _workshopAggregate.AddJob(addJob.Job)
-			);
+		private Maybe<WorkshopError> ProcessCommand(WorkshopCommand command) 
+			=> _workshopAggregate
+				.HandleCommand(command)
+				.Match(error => HandleError(command, error), CommitEvents);
 
 		private void HandleError(WorkshopCommand command, WorkshopError error)
 			=> _eventSubject.OnError(new WorkshopCommandException(command, error));

@@ -25,13 +25,13 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 			=> _sut.LoadFromHistory(events);
 
 		protected Maybe<WorkshopError> Act_AddWorker(Worker worker)
-			=> _sut.AddWorker(worker);
+			=> _sut.HandleCommand(new WorkshopCommand.AddWorker(worker));
 
 		protected Maybe<WorkshopError> Act_AddJob(Job job)
-			=> _sut.AddJob(job);
+			=> _sut.HandleCommand(new WorkshopCommand.AddJob(job));
 
 		protected Maybe<WorkshopError> Act_AssignJob(WorkerIdentifier workerId, JobIdentifier jobId)
-			=> _sut.AssignJob(workerId, jobId);
+			=> _sut.HandleCommand(new WorkshopCommand.AssignJob(jobId, workerId));
 		
 		protected void Assert_UncommittedEventsContains(params WorkshopEvent[] expected)
 			=> _sut.UncommittedEvents.Should().ContainInOrder(expected);
