@@ -1,12 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UniRx;
 using UnityEngine;
 using Workshop.Domain.Work;
-using Workshop.Models;
+using Workshop.Domain.Work.Aggregates;
 using Workshop.Presentation.Jobs.Panel;
 using Zenject;
-using System;
-using Workshop.Domain.Work.Aggregates;
 
 namespace Workshop.Presentation.Jobs
 {

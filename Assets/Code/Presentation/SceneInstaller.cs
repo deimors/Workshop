@@ -3,7 +3,6 @@ using UniRx;
 using Workshop.Actors;
 using Workshop.Domain.Work;
 using Workshop.Domain.Work.Concrete;
-using Workshop.Models;
 using Workshop.UseCases.Work;
 using Zenject;
 
@@ -17,13 +16,7 @@ namespace Workshop.Presentation
 				.To<ApplyConstantWorkToJob>()
 				.AsSingle()
 				.WithArguments(QuantityOfWork.Unit);
-
-			/*
-			Container
-				.BindInterfacesTo<PerformAssignedWork>()
-				.AsSingle();
-			*/
-
+			
 			Container
 				.BindInterfacesTo<PerformAssignedWorkFromAggregate>()
 				.AsSingle();
@@ -34,22 +27,6 @@ namespace Workshop.Presentation
 
 			Container
 				.Bind<JobStatusReadModel>()
-				.AsSingle();
-
-			Container.BindFactory<IWriteJob, IReadJob, IPerformWork, PerformWorkFactory>()
-				.To<CompleteWorkAfterDelay>()
-				.WithArguments(TimeSpan.FromSeconds(1));
-
-			Container
-				.BindInterfacesTo<JobList>()
-				.AsSingle();
-
-			Container
-				.BindInterfacesTo<WorkerList>()
-				.AsSingle();
-
-			Container
-				.BindInterfacesTo<AssignmentMap>()
 				.AsSingle();
 
 			Container

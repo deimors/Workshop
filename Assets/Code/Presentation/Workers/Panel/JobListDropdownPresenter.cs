@@ -8,8 +8,6 @@ using UnityEngine.UI;
 using Workshop.Actors;
 using Workshop.Domain.Work;
 using Workshop.Domain.Work.Aggregates;
-using Workshop.Models;
-using Workshop.UseCases.Work;
 using Zenject;
 
 namespace Workshop.Presentation.Workers.Panel
