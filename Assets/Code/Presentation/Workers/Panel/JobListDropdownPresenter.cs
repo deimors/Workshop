@@ -19,22 +19,18 @@ namespace Workshop.Presentation.Workers.Panel
 
 		[Inject]
 		public WorkerIdentifier WorkerIdentifier { get; }
-
-		private readonly IDictionary<Dropdown.OptionData, JobDropdownOption> _jobOptions = new Dictionary<Dropdown.OptionData, JobDropdownOption>();
-
+		
 		private bool updateLock;
 
 		[Inject]
-		public void NewSetup(IObservable<WorkshopEvent> workshopEvents, IQueueWorkshopCommands queueWorkshopCommands)
+		public void Initialize(IObservable<WorkshopEvent> workshopEvents, IQueueWorkshopCommands queueWorkshopCommands)
 		{
-			AddJobOption(JobDropdownOption.None);
-
-			UpdateDropdownOptions();
-
+			AddJobOption(JobListDropdownOption.None);
+			
 			workshopEvents
 				.OfType<WorkshopEvent, WorkshopEvent.JobAdded>()
-				.Do(jobAdded => AddJobOption(new JobDropdownOption(jobAdded.Job.Id)))
-				.Subscribe(_ => UpdateDropdownOptions());
+				.Select(jobAdded => jobAdded.Job.Id)
+				.Subscribe(AddJobOption);
 
 			workshopEvents
 				.OfType<WorkshopEvent, WorkshopEvent.JobUnassigned>()
@@ -45,34 +41,27 @@ namespace Workshop.Presentation.Workers.Panel
 				.AsObservable()
 				.Where(_ => !updateLock)
 				.Select(selectedIndex => _jobListDropdown.options[selectedIndex])
-				.Select(GetJobIdentifierFromOptionData)
-				.Select(BuildSelectionCommand)
+				.OfType<Dropdown.OptionData, JobListDropdownOption>()
+				.Select(option => option.JobId)
+				.Select(BuildJobSelectionCommand)
 				.Subscribe(queueWorkshopCommands.QueueCommand);
 		}
-
+		
 		private void SelectNoneOption()
 		{
 			updateLock = true;
 			_jobListDropdown.value = 0;
 			updateLock = false;
 		}
+
+		private void AddJobOption(JobIdentifier jobId)
+			=> AddJobOption(new JobListDropdownOption(jobId));
+
+
+		private void AddJobOption(JobListDropdownOption option)
+			=> _jobListDropdown.AddOptions(new List<Dropdown.OptionData> { option });
 		
-		private void AddJobOption(JobDropdownOption jobOption)
-			=> _jobOptions[new Dropdown.OptionData(jobOption.ToString())] = jobOption;
-
-		private void UpdateDropdownOptions()
-		{
-			_jobListDropdown.ClearOptions();
-			_jobListDropdown.AddOptions(_jobOptions.Keys.ToList());
-		}
-		
-		private WorkshopCommand CreateAssignJobCommand(JobIdentifier jobIdentifier)
-			=> new WorkshopCommand.AssignJob(jobIdentifier, WorkerIdentifier);
-
-		private Maybe<JobIdentifier> GetJobIdentifierFromOptionData(Dropdown.OptionData option) 
-			=> _jobOptions.Lookup(option).Select(jobOption => jobOption.Job);
-
-		private WorkshopCommand BuildSelectionCommand(Maybe<JobIdentifier> maybeJobId)
+		private WorkshopCommand BuildJobSelectionCommand(Maybe<JobIdentifier> maybeJobId)
 			=> maybeJobId.SelectOrElse<JobIdentifier, WorkshopCommand>(
 				jobId => new WorkshopCommand.AssignJob(jobId, WorkerIdentifier),
 				() => new WorkshopCommand.UnassignWorker(WorkerIdentifier)
