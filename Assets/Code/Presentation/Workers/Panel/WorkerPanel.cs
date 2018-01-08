@@ -17,10 +17,6 @@ namespace Workshop.Presentation.Workers.Panel
 			Container.Bind<WorkerPanel>().FromInstance(this);
 
 			Container.BindInstance(Identifier);
-
-			//Container.Bind<IReadWorker>().FromResolveGetter<IReadWorkerList>(jobList => jobList[Identifier]);
-
-			Container.BindInterfacesTo<GetJobListDropdownOptions>().AsSingle();
 		}
 	}
 }

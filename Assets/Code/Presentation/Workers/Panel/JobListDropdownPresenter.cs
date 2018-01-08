@@ -24,10 +24,10 @@ namespace Workshop.Presentation.Workers.Panel
 
 		private readonly IDictionary<Dropdown.OptionData, JobDropdownOption> _jobOptions = new Dictionary<Dropdown.OptionData, JobDropdownOption>();
 
-		private IWriteWorkerJobAssignment _writeAssigments;
+		private bool updateLock;
 
 		[Inject]
-		public void NewSetup(IObservable<WorkshopEvent> workshopEvents)
+		public void NewSetup(IObservable<WorkshopEvent> workshopEvents, IQueueWorkshopCommands queueWorkshopCommands)
 		{
 			AddJobOption(JobDropdownOption.None);
 
@@ -38,38 +38,27 @@ namespace Workshop.Presentation.Workers.Panel
 				.Do(jobAdded => AddJobOption(new JobDropdownOption(jobAdded.Job.Id)))
 				.Subscribe(_ => UpdateDropdownOptions());
 
+			workshopEvents
+				.OfType<WorkshopEvent, WorkshopEvent.JobUnassigned>()
+				.Where(jobUnassigned => jobUnassigned.WorkerId == WorkerIdentifier)
+				.Subscribe(_ => SelectNoneOption());
+
 			_jobListDropdown.onValueChanged
 				.AsObservable()
+				.Where(_ => !updateLock)
 				.Select(selectedIndex => _jobListDropdown.options[selectedIndex])
 				.Select(GetJobIdentifierFromOptionData)
-				.Subscribe(maybeJobId => maybeJobId.Match(jobId => { }, () => { }));
+				.Select(BuildSelectionCommand)
+				.Subscribe(queueWorkshopCommands.QueueCommand);
 		}
 
-		//[Inject]
-		public void Setup(IReadJobList readJobs, IObserveJobList observeJobs, IWriteWorkerJobAssignment writeAssignments, IObserveWorkerJobAssignment observeAssignments, IGetJobDropdownOptions dropdownOptions)
+		private void SelectNoneOption()
 		{
-			_writeAssigments = writeAssignments;
-
-			foreach (var option in dropdownOptions.Options)
-				AddJobOption(option);
-
-			UpdateDropdownOptions();
-
-			observeJobs.ObserveAdd
-				.Select(job => new JobDropdownOption(job))
-				.Do(AddJobOption)
-				.Subscribe(_ => UpdateDropdownOptions());
-
-			_jobListDropdown.onValueChanged
-				.AsObservable()
-				.Select(selectedIndex => _jobListDropdown.options[selectedIndex])
-				.Subscribe(OnOptionSelected);
-
-			observeAssignments.Assignments
-				.Where(assignments => assignments[WorkerIdentifier].IsNothing())
-				.Subscribe(_ => _jobListDropdown.value = 0);
+			updateLock = true;
+			_jobListDropdown.value = 0;
+			updateLock = false;
 		}
-
+		
 		private void AddJobOption(JobDropdownOption jobOption)
 			=> _jobOptions[new Dropdown.OptionData(jobOption.ToString())] = jobOption;
 
@@ -78,14 +67,17 @@ namespace Workshop.Presentation.Workers.Panel
 			_jobListDropdown.ClearOptions();
 			_jobListDropdown.AddOptions(_jobOptions.Keys.ToList());
 		}
-
-		private void OnOptionSelected(Dropdown.OptionData option)
-			=> _writeAssigments[WorkerIdentifier] = GetJobIdentifierFromOptionData(option);
-
+		
 		private WorkshopCommand CreateAssignJobCommand(JobIdentifier jobIdentifier)
 			=> new WorkshopCommand.AssignJob(jobIdentifier, WorkerIdentifier);
 
 		private Maybe<JobIdentifier> GetJobIdentifierFromOptionData(Dropdown.OptionData option) 
 			=> _jobOptions.Lookup(option).Select(jobOption => jobOption.Job);
+
+		private WorkshopCommand BuildSelectionCommand(Maybe<JobIdentifier> maybeJobId)
+			=> maybeJobId.SelectOrElse<JobIdentifier, WorkshopCommand>(
+				jobId => new WorkshopCommand.AssignJob(jobId, WorkerIdentifier),
+				() => new WorkshopCommand.UnassignWorker(WorkerIdentifier)
+			);
 	}
 }

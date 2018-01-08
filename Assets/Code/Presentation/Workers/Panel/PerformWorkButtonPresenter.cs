@@ -16,8 +16,6 @@ namespace Workshop.Presentation.Workers.Panel
 		public void Initialize(WorkerIdentifier worker, IPerformAssignedWork performAssignedWork)
 		{
 			StartButton.onClick.AsObservable().Subscribe(_ => performAssignedWork.Perform(worker));
-
-			//jobState.Busy.Subscribe(busy => StartButton.interactable = !busy);
 		}
 	}
 }

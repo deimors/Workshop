@@ -1,9 +1,17 @@
 ﻿using OneOf;
 using System;
+using System.Collections.Generic;
 
 namespace Workshop.Domain.Work.Aggregates
 {
-	public class WorkshopEvent : OneOfBase<WorkshopEvent.WorkerAdded, WorkshopEvent.JobAdded, WorkshopEvent.JobAssigned, WorkshopEvent.JobUnassigned>
+	public class WorkshopEvent 
+		: OneOfBase<
+			WorkshopEvent.WorkerAdded, 
+			WorkshopEvent.JobAdded, 
+			WorkshopEvent.JobAssigned, 
+			WorkshopEvent.JobUnassigned,
+			WorkshopEvent.JobStatusUpdated
+		>
 	{
 		public class WorkerAdded : WorkshopEvent, IEquatable<WorkerAdded>
 		{
@@ -129,6 +137,40 @@ namespace Workshop.Domain.Work.Aggregates
 
 			public static bool operator !=(JobUnassigned unassigned1, JobUnassigned unassigned2) 
 				=> !(unassigned1 == unassigned2);
+		}
+
+		public class JobStatusUpdated : WorkshopEvent, IEquatable<JobStatusUpdated>
+		{
+			public JobIdentifier JobId { get; }
+			public JobStatus NewStatus { get; }
+
+			public JobStatusUpdated(JobIdentifier jobId, JobStatus newStatus)
+			{
+				JobId = jobId ?? throw new ArgumentNullException(nameof(jobId));
+				NewStatus = newStatus ?? throw new ArgumentNullException(nameof(newStatus));
+			}
+
+			public override bool Equals(object obj) 
+				=> Equals(obj as JobStatusUpdated);
+
+			public bool Equals(JobStatusUpdated other) 
+				=> !(other is null) 
+				&& JobId.Equals(other.JobId) 
+				&& NewStatus.Equals(other.NewStatus);
+
+			public override int GetHashCode()
+			{
+				var hashCode = -709292244;
+				hashCode = hashCode * -1521134295 + JobId.GetHashCode();
+				hashCode = hashCode * -1521134295 + NewStatus.GetHashCode();
+				return hashCode;
+			}
+
+			public static bool operator ==(JobStatusUpdated updated1, JobStatusUpdated updated2) 
+				=> updated1?.Equals(updated2) ?? (updated2 is null);
+
+			public static bool operator !=(JobStatusUpdated updated1, JobStatusUpdated updated2) 
+				=> !(updated1 == updated2);
 		}
 	}
 }

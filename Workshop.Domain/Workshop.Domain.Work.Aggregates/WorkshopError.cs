@@ -5,6 +5,7 @@
 		WorkerAlreadyAdded,
 		JobAlreadyAdded,
 		UnknownWorker,
-		UnknownJob
+		UnknownJob,
+		WorkerNotAssigned
 	}
 }

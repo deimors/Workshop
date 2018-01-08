@@ -18,8 +18,22 @@ namespace Workshop.Presentation
 				.AsSingle()
 				.WithArguments(QuantityOfWork.Unit);
 
+			/*
 			Container
 				.BindInterfacesTo<PerformAssignedWork>()
+				.AsSingle();
+			*/
+
+			Container
+				.BindInterfacesTo<PerformAssignedWorkFromAggregate>()
+				.AsSingle();
+
+			Container
+				.Bind<JobsAssignedToWorkerReadModel>()
+				.AsSingle();
+
+			Container
+				.Bind<JobStatusReadModel>()
 				.AsSingle();
 
 			Container.BindFactory<IWriteJob, IReadJob, IPerformWork, PerformWorkFactory>()

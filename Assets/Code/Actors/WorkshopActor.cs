@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using UniRx;
+using UnityEngine;
 using Workshop.Domain.Work;
 using Workshop.Domain.Work.Aggregates;
 
@@ -63,7 +64,10 @@ namespace Workshop.Actors
 				.Match(error => HandleError(command, error), CommitEvents);
 
 		private void HandleError(WorkshopCommand command, WorkshopError error)
-			=> _eventSubject.OnError(new WorkshopCommandException(command, error));
+		{
+			Debug.Log($"{command.GetType().Name} threw {error.ToString()}");
+			_eventSubject.OnError(new WorkshopCommandException(command, error));
+		}
 
 		private void CommitEvents()
 		{

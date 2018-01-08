@@ -18,8 +18,6 @@ namespace Workshop.Presentation.Jobs.Panel
 			Container.Bind<IJobPanel>().FromInstance(this);
 
 			Container.BindInstance(Identifier);
-
-			//Container.Bind<IReadJob>().FromResolveGetter<IReadJobList>(jobList => jobList[Identifier]);
 		}
 	}
 }

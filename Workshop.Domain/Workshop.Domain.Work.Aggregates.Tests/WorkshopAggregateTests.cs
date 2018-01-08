@@ -32,6 +32,12 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 
 		protected Maybe<WorkshopError> Act_AssignJob(WorkerIdentifier workerId, JobIdentifier jobId)
 			=> _sut.HandleCommand(new WorkshopCommand.AssignJob(jobId, workerId));
+
+		protected Maybe<WorkshopError> Act_UnassignWorker(WorkerIdentifier workerId)
+			=> _sut.HandleCommand(new WorkshopCommand.UnassignWorker(workerId));
+
+		protected Maybe<WorkshopError> Act_UpdateJobStatus(JobIdentifier jobId, JobStatus status)
+			=> _sut.HandleCommand(new WorkshopCommand.UpdateJobStatus(jobId, status));
 		
 		protected void Assert_UncommittedEventsContains(params WorkshopEvent[] expected)
 			=> _sut.UncommittedEvents.Should().ContainInOrder(expected);
@@ -46,7 +52,7 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 			=> result.Should().Be(error.ToMaybe());
 	}
 
-	public class WhenNoWorkers : WorkshopAggregateTestFixture
+	public class WhenNoHistory : WorkshopAggregateTestFixture
 	{
 		[Theory, AutoData]
 		public void AddWorker_Succeeds(Worker worker)
@@ -83,6 +89,20 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		{
 			Act_AssignJob(someWorker, someJob.Id)
 				.Assert_FailsWith(WorkshopError.UnknownWorker);
+		}
+
+		[Theory, AutoData]
+		public void UnassignSomeWorker_FailsWithUnknownWorker(WorkerIdentifier someWorker)
+		{
+			Act_UnassignWorker(someWorker)
+				.Assert_FailsWith(WorkshopError.UnknownWorker);
+		}
+
+		[Theory, WorkAutoData]
+		public void UpdateSomeJobStatusToNewStatus_FailsWithUnknownJob(JobIdentifier someJob, JobStatus newStatus)
+		{
+			Act_UpdateJobStatus(someJob, newStatus)
+				.Assert_FailsWith(WorkshopError.UnknownJob);
 		}
 	}
 
@@ -125,6 +145,13 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 			Act_AssignJob(_addedWorker.Id, someJob.Id)
 				.Assert_FailsWith(WorkshopError.UnknownJob);
 		}
+
+		[Fact]
+		public void UnassignAddedWorker_FailsWithWorkerNotAssigned()
+		{
+			Act_UnassignWorker(_addedWorker.Id)
+				.Assert_FailsWith(WorkshopError.WorkerNotAssigned);
+		}
 	}
 
 	public class AfterJobAdded : WorkshopAggregateTestFixture
@@ -165,6 +192,23 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		{
 			Act_AssignJob(someWorker, _addedJob.Id)
 				.Assert_FailsWith(WorkshopError.UnknownWorker);
+		}
+
+		[Theory, WorkAutoData]
+		public void UpdateJobStatusToNewStatus_Succeeds(JobStatus newStatus)
+		{
+			Act_UpdateJobStatus(_addedJob.Id, newStatus)
+				.Assert_Succeeds();
+		}
+
+		[Theory, WorkAutoData]
+		public void UpdateJobStatusToNewStatus_UncommettidEventsContainsJobStatusUpdatedEvent(JobStatus newStatus)
+		{
+			Act_UpdateJobStatus(_addedJob.Id, newStatus);
+
+			Assert_UncommittedEventsContains(
+				new WorkshopEvent.JobStatusUpdated(_addedJob.Id, newStatus)
+			);
 		}
 	}
 
@@ -262,6 +306,23 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 			Assert_UncommittedEventsContains(
 				new WorkshopEvent.JobUnassigned(_addedWorker.Id, _addedJob.Id),
 				new WorkshopEvent.JobAssigned(_addedWorker.Id, anotherJob.Id)				
+			);
+		}
+
+		[Fact]
+		public void UnassignAddedWorker_Succeeds()
+		{
+			Act_UnassignWorker(_addedWorker.Id)
+				.Assert_Succeeds();
+		}
+
+		[Fact]
+		public void UnassignAddedWorker_UncommittedEventsContainsAddedWorkerUnassigned()
+		{
+			Act_UnassignWorker(_addedWorker.Id);
+
+			Assert_UncommittedEventsContains(
+				new WorkshopEvent.JobUnassigned(_addedWorker.Id, _addedJob.Id)
 			);
 		}
 	}

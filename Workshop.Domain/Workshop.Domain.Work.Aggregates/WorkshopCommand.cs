@@ -2,7 +2,14 @@
 
 namespace Workshop.Domain.Work.Aggregates
 {
-	public class WorkshopCommand : OneOfBase<WorkshopCommand.AddWorker, WorkshopCommand.AddJob, WorkshopCommand.AssignJob>
+	public class WorkshopCommand 
+		: OneOfBase<
+			WorkshopCommand.AddWorker, 
+			WorkshopCommand.AddJob, 
+			WorkshopCommand.AssignJob, 
+			WorkshopCommand.UnassignWorker,
+			WorkshopCommand.UpdateJobStatus
+		>
 	{
 		public class AddWorker : WorkshopCommand
 		{
@@ -33,6 +40,28 @@ namespace Workshop.Domain.Work.Aggregates
 			{
 				JobId = jobId;
 				WorkerId = workerId;
+			}
+		}
+
+		public class UnassignWorker : WorkshopCommand
+		{
+			public WorkerIdentifier WorkerId { get; }
+
+			public UnassignWorker(WorkerIdentifier workerId)
+			{
+				WorkerId = workerId;
+			}
+		}
+
+		public class UpdateJobStatus : WorkshopCommand
+		{
+			public JobIdentifier JobId { get; }
+			public JobStatus Status { get; }
+
+			public UpdateJobStatus(JobIdentifier jobId, JobStatus status)
+			{
+				JobId = jobId;
+				Status = status;
 			}
 		}
 	}

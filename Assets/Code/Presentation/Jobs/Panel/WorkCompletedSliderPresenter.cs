@@ -1,9 +1,10 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 using Workshop.Domain.Work;
-using Workshop.Models;
+using Workshop.Domain.Work.Aggregates;
 using Zenject;
 
 namespace Workshop.Presentation.Jobs.Panel
@@ -13,18 +14,32 @@ namespace Workshop.Presentation.Jobs.Panel
 		[SerializeField]
 		private Slider _completedSlider;
 
-		/*
 		[Inject]
-		public void Initialize(IReadJob workModel)
-			=> workModel.Value
+		public JobIdentifier JobId { get; }
+
+		[Inject]
+		public void Initialize(IObservable<WorkshopEvent> workshopEvents)
+		{
+			var addedStatus = workshopEvents
+				.OfType<WorkshopEvent, WorkshopEvent.JobAdded>()
+				.Where(jobAdded => jobAdded.Job.Id == JobId)
+				.Select(jobAdded => jobAdded.Job.Status);
+
+			var updatedStatus = workshopEvents
+				.OfType<WorkshopEvent, WorkshopEvent.JobStatusUpdated>()
+				.Where(jobStatusUpdated => jobStatusUpdated.JobId == JobId)
+				.Select(jobStatusUpdated => jobStatusUpdated.NewStatus);
+
+			addedStatus
+				.Merge(updatedStatus)
 				.Select(GetPercentageComplete)
 				.Subscribe(SetSliderValue);
+		}
 		
-		private static float GetPercentageComplete(Job job) 
-			=> job.Status.Completed / job.Status.Total;
+		private static float GetPercentageComplete(JobStatus jobStatus) 
+			=> jobStatus.Completed / jobStatus.Total;
 
 		private void SetSliderValue(float percentage)
 			=> _completedSlider.value = percentage;
-		*/
 	}
 }

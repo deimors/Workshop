@@ -25,12 +25,12 @@ namespace Workshop.Core
 		public class AggregateCommandRecord<TEvent, TError> : AggregateCommand<TEvent, TError>
 		{
 			private readonly AggregateCommand<TEvent, TError> _parent;
-			private readonly TEvent _event;
+			private readonly Func<TEvent> _eventFactory;
 
-			public AggregateCommandRecord(AggregateCommand<TEvent, TError> parent, TEvent @event) : base(parent.Subject)
+			public AggregateCommandRecord(AggregateCommand<TEvent, TError> parent, Func<TEvent> eventFactory) : base(parent.Subject)
 			{
 				_parent = parent;
-				_event = @event;
+				_eventFactory = eventFactory;
 			}
 
 			public override Maybe<TError> Execute() 
@@ -39,7 +39,7 @@ namespace Workshop.Core
 						error => error.ToMaybe(),
 						() =>
 						{
-							Subject.Record(_event);
+							Subject.Record(_eventFactory());
 							return Maybe<TError>.Nothing;
 						}
 					);
@@ -101,8 +101,8 @@ namespace Workshop.Core
 		public static AggregateCommand<TEvent, TError> FailIf<TEvent, TError>(this AggregateCommand<TEvent, TError> command, Func<bool> predicate, Func<TError> errorFactory)
 			=> new AggregateCommandFailIf<TEvent, TError>(command, predicate, errorFactory);
 		
-		public static AggregateCommand<TEvent, TError> Record<TEvent, TError>(this AggregateCommand<TEvent, TError> command, TEvent @event)
-			=> new AggregateCommandRecord<TEvent, TError>(command, @event);
+		public static AggregateCommand<TEvent, TError> Record<TEvent, TError>(this AggregateCommand<TEvent, TError> command, Func<TEvent> eventFactory)
+			=> new AggregateCommandRecord<TEvent, TError>(command, eventFactory);
 		
 		public static AggregateCommand<TEvent, TError> RecordIf<TEvent, TError>(this AggregateCommand<TEvent, TError> command, Func<bool> predicate, Func<TEvent> eventFactory)
 			=> new AggregateCommandRecordIf<TEvent, TError>(command, predicate, eventFactory);
