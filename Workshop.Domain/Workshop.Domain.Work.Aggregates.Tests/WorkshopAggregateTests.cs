@@ -22,7 +22,7 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		}
 
 		protected void Arrange_EventHistory(params WorkshopEvent[] events)
-			=> _sut.LoadFromHistory(events);
+			=> _sut.Replay(events);
 
 		protected Maybe<WorkshopError> Act_AddWorker(Worker worker)
 			=> _sut.HandleCommand(new WorkshopCommand.AddWorker(worker));
