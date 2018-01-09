@@ -43,15 +43,15 @@ namespace Workshop.Domain.Work.Aggregates
 				.FailIf(() => !State.Jobs.ContainsKey(command.JobId), () => WorkshopError.UnknownJob)
 				.Record(() => new WorkshopEvent.JobStatusUpdated(command.JobId, command.Status))
 				.Execute();
-
-		private JobIdentifier GetAssignedJob(WorkerIdentifier workerId)
-			=> State.Assignments.Single(pair => pair.Value == workerId).Key;
-
+		
 		private Maybe<WorkshopError> UnassignWorker(WorkshopCommand.UnassignWorker command)
 			=> this.BuildCommand<WorkshopEvent, WorkshopError>()
 				.FailIf(() => !State.Workers.ContainsKey(command.WorkerId), () => WorkshopError.UnknownWorker)
 				.FailIf(() => !State.Assignments.Values.Contains(command.WorkerId), () => WorkshopError.WorkerNotAssigned)
 				.Record(() => new WorkshopEvent.JobUnassigned(command.WorkerId, GetAssignedJob(command.WorkerId)))
 				.Execute();
+
+		private JobIdentifier GetAssignedJob(WorkerIdentifier workerId)
+			=> State.Assignments.Single(pair => pair.Value == workerId).Key;
 	}
 }
