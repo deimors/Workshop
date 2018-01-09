@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Workshop.Core
 {
-	public abstract class AggregateRoot<TEvent>
+	public abstract class AggregateRoot<TEvent> : IRecordEvent<TEvent>
 	{
 		private readonly Queue<TEvent> _uncommittedEvents = new Queue<TEvent>();
 

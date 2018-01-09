@@ -1,9 +1,5 @@
 ﻿using Functional.Maybe;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Workshop.Core
 {
@@ -11,11 +7,11 @@ namespace Workshop.Core
 	{
 		public class AggregateCommand<TEvent, TError>
 		{
-			public AggregateRoot<TEvent> Subject;
+			public IRecordEvent<TEvent> Recorder;
 
-			public AggregateCommand(AggregateRoot<TEvent> subject)
+			public AggregateCommand(IRecordEvent<TEvent> recorder)
 			{
-				Subject = subject ?? throw new ArgumentNullException(nameof(subject));
+				Recorder = recorder ?? throw new ArgumentNullException(nameof(recorder));
 			}
 
 			public virtual Maybe<TError> Execute() 
@@ -27,7 +23,7 @@ namespace Workshop.Core
 			private readonly AggregateCommand<TEvent, TError> _parent;
 			private readonly Func<TEvent> _eventFactory;
 
-			public AggregateCommandRecord(AggregateCommand<TEvent, TError> parent, Func<TEvent> eventFactory) : base(parent.Subject)
+			public AggregateCommandRecord(AggregateCommand<TEvent, TError> parent, Func<TEvent> eventFactory) : base(parent.Recorder)
 			{
 				_parent = parent;
 				_eventFactory = eventFactory;
@@ -39,7 +35,7 @@ namespace Workshop.Core
 						error => error.ToMaybe(),
 						() =>
 						{
-							Subject.Record(_eventFactory());
+							Recorder.Record(_eventFactory());
 							return Maybe<TError>.Nothing;
 						}
 					);
@@ -51,7 +47,7 @@ namespace Workshop.Core
 			private readonly Func<bool> _predicate;
 			private readonly Func<TEvent> _eventFactory;
 
-			public AggregateCommandRecordIf(AggregateCommand<TEvent, TError> parent, Func<bool> predicate, Func<TEvent> eventFactory) : base(parent.Subject)
+			public AggregateCommandRecordIf(AggregateCommand<TEvent, TError> parent, Func<bool> predicate, Func<TEvent> eventFactory) : base(parent.Recorder)
 			{
 				_parent = parent;
 				_predicate = predicate;
@@ -65,7 +61,7 @@ namespace Workshop.Core
 						() =>
 						{
 							if (_predicate())
-								Subject.Record(_eventFactory());
+								Recorder.Record(_eventFactory());
 
 							return Maybe<TError>.Nothing;
 						}
@@ -78,7 +74,7 @@ namespace Workshop.Core
 			private readonly Func<bool> _predicate;
 			private readonly Func<TError> _errorFactory;
 
-			public AggregateCommandFailIf(AggregateCommand<TEvent, TError> parent, Func<bool> predicate, Func<TError> errorFactory) : base(parent.Subject)
+			public AggregateCommandFailIf(AggregateCommand<TEvent, TError> parent, Func<bool> predicate, Func<TError> errorFactory) : base(parent.Recorder)
 			{
 				_parent = parent;
 				_predicate = predicate;
@@ -95,8 +91,8 @@ namespace Workshop.Core
 					);
 		}
 
-		public static AggregateCommand<TEvent, TError> BuildCommand<TEvent, TError>(this AggregateRoot<TEvent> aggregateRoot)
-			=> new AggregateCommand<TEvent, TError>(aggregateRoot);
+		public static AggregateCommand<TEvent, TError> BuildCommand<TEvent, TError>(this IRecordEvent<TEvent> recorder)
+			=> new AggregateCommand<TEvent, TError>(recorder);
 		
 		public static AggregateCommand<TEvent, TError> FailIf<TEvent, TError>(this AggregateCommand<TEvent, TError> command, Func<bool> predicate, Func<TError> errorFactory)
 			=> new AggregateCommandFailIf<TEvent, TError>(command, predicate, errorFactory);

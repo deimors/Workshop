@@ -5,7 +5,7 @@ using Workshop.Core;
 
 namespace Workshop.Domain.Work.Aggregates
 {
-	public class WorkshopAggregate : AggregateRoot<WorkshopEvent>
+	public class WorkshopAggregate : AggregateRoot<WorkshopEvent>, IHandleCommand<WorkshopCommand, WorkshopError>
 	{
 		private readonly IDictionary<WorkerIdentifier, Worker> _workers = new Dictionary<WorkerIdentifier, Worker>();
 		private readonly IDictionary<JobIdentifier, Job> _jobs = new Dictionary<JobIdentifier, Job>();
@@ -47,7 +47,7 @@ namespace Workshop.Domain.Work.Aggregates
 				.Record(() => new WorkshopEvent.JobStatusUpdated(command.JobId, command.Status))
 				.Execute();
 
-		private JobIdentifier GetAssignedJob(WorkerIdentifier workerId) 
+		private JobIdentifier GetAssignedJob(WorkerIdentifier workerId)
 			=> _assignments.Single(pair => pair.Value == workerId).Key;
 
 		private Maybe<WorkshopError> UnassignWorker(WorkshopCommand.UnassignWorker command)
@@ -56,7 +56,7 @@ namespace Workshop.Domain.Work.Aggregates
 				.FailIf(() => !_assignments.Values.Contains(command.WorkerId), () => WorkshopError.WorkerNotAssigned)
 				.Record(() => new WorkshopEvent.JobUnassigned(command.WorkerId, GetAssignedJob(command.WorkerId)))
 				.Execute();
-
+	
 		protected override void ApplyEvent(WorkshopEvent @event)
 			=> @event.Switch(
 				workerAdded => _workers.Add(workerAdded.Worker.Id, workerAdded.Worker),
