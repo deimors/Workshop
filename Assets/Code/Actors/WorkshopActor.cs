@@ -65,8 +65,7 @@ namespace Workshop.Actors
 
 		private void HandleError(WorkshopCommand command, WorkshopError error)
 		{
-			Debug.Log($"{command.GetType().Name} threw {error.ToString()}");
-			_eventSubject.OnError(new WorkshopCommandException(command, error));
+			Debug.LogError($"{command.GetType().Name} threw {error.ToString()}");
 		}
 
 		private void CommitEvents()
