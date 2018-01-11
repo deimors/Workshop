@@ -22,22 +22,24 @@ namespace Workshop.UseCases.Work
 			_queueWorkshopCommands = queueWorkshopCommands;
 		}
 
-		public void Perform(WorkerIdentifier workerId) 
-			=> _jobAssignments[workerId]
-				.Match(
-					WorkOnJobAfterDelay,
-					() => { }
-				);
+		public void Perform(WorkerIdentifier workerId)
+			=> _jobAssignments[workerId].Match(WorkOnJob, () => { });
 
-		private void WorkOnJobAfterDelay(JobIdentifier jobId) 
+		private void WorkOnJob(JobIdentifier jobId)
+		{
+			StartWorkOnJob(jobId);
+			CompleteWorkOnJobAfterDelay(jobId);
+		}
+
+		private void CompleteWorkOnJobAfterDelay(JobIdentifier jobId)
 			=> Observable.Timer(TimeSpan.FromSeconds(2))
 				.Select(_ => jobId)
-				.Subscribe(WorkOnJob);
+				.Subscribe(CompleteWorkOnJob);
 
-		private void WorkOnJob(JobIdentifier jobId) 
-			=> UpdateJobStatus(jobId, _workOnJob.ApplyEffort(_jobStatuses[jobId], new QuantityOfEffort()));
+		private void StartWorkOnJob(JobIdentifier jobId)
+			=> _queueWorkshopCommands.QueueCommand(new WorkshopCommand.StartWork(jobId));
 
-		private void UpdateJobStatus(JobIdentifier jobId, JobStatus newStatus) 
-			=> _queueWorkshopCommands.QueueCommand(new WorkshopCommand.UpdateJobStatus(jobId, newStatus));
+		private void CompleteWorkOnJob(JobIdentifier jobId)
+			=> _queueWorkshopCommands.QueueCommand(new WorkshopCommand.CompleteWork(jobId, QuantityOfWork.Unit));
 	}
 }

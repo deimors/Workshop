@@ -19,7 +19,8 @@ namespace Workshop.Domain.Work.Aggregates
 				jobAdded => _jobs.Add(jobAdded.Job.Id, jobAdded.Job),
 				jobAssigned => _assignments.Add(jobAssigned.JobId, jobAssigned.WorkerId),
 				jobUnassigned => _assignments.Remove(jobUnassigned.JobId),
-				jobStatusUpdated => _jobs[jobStatusUpdated.JobId] = Jobs[jobStatusUpdated.JobId].With(status : x => jobStatusUpdated.NewStatus)
+				jobStatusUpdated => _jobs[jobStatusUpdated.JobId] = Jobs[jobStatusUpdated.JobId].With(status: x => jobStatusUpdated.NewStatus),
+				workerStatusUpdated => _workers[workerStatusUpdated.WorkerId] = _workers[workerStatusUpdated.WorkerId].With(status: x => workerStatusUpdated.NewStatus)
 			);
 	}
 }

@@ -10,7 +10,8 @@ namespace Workshop.Domain.Work.Aggregates
 			WorkshopEvent.JobAdded, 
 			WorkshopEvent.JobAssigned, 
 			WorkshopEvent.JobUnassigned,
-			WorkshopEvent.JobStatusUpdated
+			WorkshopEvent.JobStatusUpdated,
+			WorkshopEvent.WorkerStatusUpdated
 		>
 	{
 		public class WorkerAdded : WorkshopEvent, IEquatable<WorkerAdded>
@@ -170,6 +171,40 @@ namespace Workshop.Domain.Work.Aggregates
 				=> updated1?.Equals(updated2) ?? (updated2 is null);
 
 			public static bool operator !=(JobStatusUpdated updated1, JobStatusUpdated updated2) 
+				=> !(updated1 == updated2);
+		}
+
+		public class WorkerStatusUpdated : WorkshopEvent, IEquatable<WorkerStatusUpdated>
+		{
+			public WorkerIdentifier WorkerId { get; }
+			public WorkerStatus NewStatus { get; }
+
+			public WorkerStatusUpdated(WorkerIdentifier workerId, WorkerStatus newStatus)
+			{
+				WorkerId = workerId ?? throw new ArgumentNullException(nameof(workerId));
+				NewStatus = newStatus ?? throw new ArgumentNullException(nameof(newStatus));
+			}
+
+			public override bool Equals(object obj) 
+				=> Equals(obj as WorkerStatusUpdated);
+
+			public bool Equals(WorkerStatusUpdated other) 
+				=> !(other is null)
+					&& WorkerId.Equals(other.WorkerId)
+					&& NewStatus.Equals(other.NewStatus);
+
+			public override int GetHashCode()
+			{
+				var hashCode = 284652573;
+				hashCode = hashCode * -1521134295 + WorkerId.GetHashCode();
+				hashCode = hashCode * -1521134295 + NewStatus.GetHashCode();
+				return hashCode;
+			}
+
+			public static bool operator ==(WorkerStatusUpdated updated1, WorkerStatusUpdated updated2) 
+				=> Equals(updated1, updated2);
+
+			public static bool operator !=(WorkerStatusUpdated updated1, WorkerStatusUpdated updated2) 
 				=> !(updated1 == updated2);
 		}
 	}

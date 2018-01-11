@@ -7,10 +7,15 @@ namespace Workshop.Domain.Work.Aggregates.Tests.Customizations
 	{
 		public void Customize(IFixture fixture)
 		{
-			fixture.Register(() => fixture.Create<float>() * QuantityOfWork.Unit);
+			fixture.Register(() => CreateQuantityOfWork(fixture));
 
 			fixture.Register(() => CreateJobStatus(fixture));
+
+			fixture.Register(() => CreateWorkerStatus(fixture));
 		}
+
+		private static QuantityOfWork CreateQuantityOfWork(IFixture fixture) 
+			=> fixture.Create<float>() * QuantityOfWork.Unit;
 
 		private JobStatus CreateJobStatus(IFixture fixture)
 		{
@@ -18,9 +23,12 @@ namespace Workshop.Domain.Work.Aggregates.Tests.Customizations
 			var quantity2 = fixture.Create<QuantityOfWork>();
 
 			return quantity1 < quantity2
-				? new JobStatus(quantity2, quantity1)
-				: new JobStatus(quantity1, quantity2);
+				? new JobStatus(quantity2, quantity1, false)
+				: new JobStatus(quantity1, quantity2, false);
 		}
+
+		private WorkerStatus CreateWorkerStatus(IFixture fixture)
+			=> new WorkerStatus(false);
 	}
 
 	public class WorkAutoDataAttribute : AutoDataAttribute

@@ -6,6 +6,9 @@
 		JobAlreadyAdded,
 		UnknownWorker,
 		UnknownJob,
-		WorkerNotAssigned
+		WorkerNotAssigned,
+		WorkNotStarted,
+		JobIsBusy,
+		WorkerIsBusy
 	}
 }

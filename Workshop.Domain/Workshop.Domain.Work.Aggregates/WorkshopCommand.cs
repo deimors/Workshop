@@ -8,7 +8,8 @@ namespace Workshop.Domain.Work.Aggregates
 			WorkshopCommand.AddJob, 
 			WorkshopCommand.AssignJob, 
 			WorkshopCommand.UnassignWorker,
-			WorkshopCommand.UpdateJobStatus
+			WorkshopCommand.StartWork,
+			WorkshopCommand.CompleteWork
 		>
 	{
 		public class AddWorker : WorkshopCommand
@@ -53,15 +54,25 @@ namespace Workshop.Domain.Work.Aggregates
 			}
 		}
 
-		public class UpdateJobStatus : WorkshopCommand
+		public class StartWork : WorkshopCommand
 		{
 			public JobIdentifier JobId { get; }
-			public JobStatus Status { get; }
 
-			public UpdateJobStatus(JobIdentifier jobId, JobStatus status)
+			public StartWork(JobIdentifier jobId)
 			{
 				JobId = jobId;
-				Status = status;
+			}
+		}
+
+		public class CompleteWork : WorkshopCommand
+		{
+			public JobIdentifier JobId { get; }
+			public QuantityOfWork Quantity { get; }
+
+			public CompleteWork(JobIdentifier jobId, QuantityOfWork quantity)
+			{
+				JobId = jobId;
+				Quantity = quantity;
 			}
 		}
 	}

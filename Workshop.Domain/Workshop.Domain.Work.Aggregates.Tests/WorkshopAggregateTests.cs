@@ -36,8 +36,11 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		protected Maybe<WorkshopError> Act_UnassignWorker(WorkerIdentifier workerId)
 			=> _sut.HandleCommand(new WorkshopCommand.UnassignWorker(workerId));
 
-		protected Maybe<WorkshopError> Act_UpdateJobStatus(JobIdentifier jobId, JobStatus status)
-			=> _sut.HandleCommand(new WorkshopCommand.UpdateJobStatus(jobId, status));
+		protected Maybe<WorkshopError> Act_StartWork(JobIdentifier jobId)
+			=> _sut.HandleCommand(new WorkshopCommand.StartWork(jobId));
+
+		protected Maybe<WorkshopError> Act_CompleteWork(JobIdentifier jobId, QuantityOfWork quantity)
+			=> _sut.HandleCommand(new WorkshopCommand.CompleteWork(jobId, quantity));
 		
 		protected void Assert_UncommittedEventsContains(params WorkshopEvent[] expected)
 			=> _sut.UncommittedEvents.Should().ContainInOrder(expected);
@@ -52,16 +55,22 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 			=> result.Should().Be(error.ToMaybe());
 	}
 
+	public static class QuantityOfWorkExtensions
+	{
+		public static QuantityOfWork ConstrainAsIncrement(this QuantityOfWork quantity, JobStatus status)
+			=> quantity % (status.Total - status.Completed);
+	}
+
 	public class WhenNoHistory : WorkshopAggregateTestFixture
 	{
-		[Theory, AutoData]
+		[Theory, WorkAutoData]
 		public void AddWorker_Succeeds(Worker worker)
 		{
 			Act_AddWorker(worker)
 				.Assert_Succeeds();
 		}
 
-		[Theory, AutoData]
+		[Theory, WorkAutoData]
 		public void AddWorker_UncommittedContainsWorkerAddedEvent(Worker worker)
 		{
 			Act_AddWorker(worker);
@@ -91,7 +100,7 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 				.Assert_FailsWith(WorkshopError.UnknownWorker);
 		}
 
-		[Theory, AutoData]
+		[Theory, WorkAutoData]
 		public void UnassignSomeWorker_FailsWithUnknownWorker(WorkerIdentifier someWorker)
 		{
 			Act_UnassignWorker(someWorker)
@@ -99,9 +108,16 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		}
 
 		[Theory, WorkAutoData]
-		public void UpdateSomeJobStatusToNewStatus_FailsWithUnknownJob(JobIdentifier someJob, JobStatus newStatus)
+		public void StartSomeJob_FailsWithUnknownJob(JobIdentifier someJob)
 		{
-			Act_UpdateJobStatus(someJob, newStatus)
+			Act_StartWork(someJob)
+				.Assert_FailsWith(WorkshopError.UnknownJob);
+		}
+
+		[Theory, WorkAutoData]
+		public void CompleteWorkOnSomeJobWithSomeQuantity_FailsWithUnknownJob(JobIdentifier someJob, QuantityOfWork someQuantity)
+		{
+			Act_CompleteWork(someJob, someQuantity)
 				.Assert_FailsWith(WorkshopError.UnknownJob);
 		}
 	}
@@ -124,14 +140,14 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 				.Assert_FailsWith(WorkshopError.WorkerAlreadyAdded);
 		}
 
-		[Theory, AutoData]
+		[Theory, WorkAutoData]
 		public void AddAnotherWorker_Succeeds(Worker anotherWorker)
 		{
 			Act_AddWorker(anotherWorker)
 				.Assert_Succeeds();
 		}
 
-		[Theory, AutoData]
+		[Theory, WorkAutoData]
 		public void AddAnotherWorker_UncommittedContainsAddAnotherWorkerEvent(Worker anotherWorker)
 		{
 			Act_AddWorker(anotherWorker);
@@ -187,28 +203,27 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 			Assert_UncommittedEventsContains(new WorkshopEvent.JobAdded(anotherJob));
 		}
 
-		[Theory, AutoData]
+		[Theory, WorkAutoData]
 		public void AssignSomeWorkerToAddedJob_FailsWithUnknownWorker(WorkerIdentifier someWorker)
 		{
 			Act_AssignJob(someWorker, _addedJob.Id)
 				.Assert_FailsWith(WorkshopError.UnknownWorker);
 		}
 
-		[Theory, WorkAutoData]
-		public void UpdateJobStatusToNewStatus_Succeeds(JobStatus newStatus)
+		[Fact]
+		public void StartWorkOnAddedJob_FailsWithWorkerNotAssigned()
 		{
-			Act_UpdateJobStatus(_addedJob.Id, newStatus)
-				.Assert_Succeeds();
+			Act_StartWork(_addedJob.Id)
+				.Assert_FailsWith(WorkshopError.WorkerNotAssigned);
 		}
 
 		[Theory, WorkAutoData]
-		public void UpdateJobStatusToNewStatus_UncommettidEventsContainsJobStatusUpdatedEvent(JobStatus newStatus)
+		public void CompleteWorkOnAddedJobWithSomeQuantity_FailsWithWorkerNotAssigned(QuantityOfWork someQuantity)
 		{
-			Act_UpdateJobStatus(_addedJob.Id, newStatus);
+			someQuantity = someQuantity.ConstrainAsIncrement(_addedJob.Status);
 
-			Assert_UncommittedEventsContains(
-				new WorkshopEvent.JobStatusUpdated(_addedJob.Id, newStatus)
-			);
+			Act_CompleteWork(_addedJob.Id, someQuantity)
+				.Assert_FailsWith(WorkshopError.WorkerNotAssigned);
 		}
 	}
 
@@ -257,7 +272,7 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 			);
 		}
 
-		[Theory, AutoData]
+		[Theory, WorkAutoData]
 		public void AssignAddedJobToAnotherWorker_Succeeds(Worker anotherWorker)
 		{
 			Arrange_EventHistory(
@@ -268,7 +283,7 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 				.Assert_Succeeds();
 		}
 
-		[Theory, AutoData]
+		[Theory, WorkAutoData]
 		public void AssignAddedJobToAnotherWorker_UncommittedEventsContainsAddedWorkerUnassignedAnotherWorkerAssigned(Worker anotherWorker)
 		{
 			Arrange_EventHistory(
@@ -324,6 +339,186 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 			Assert_UncommittedEventsContains(
 				new WorkshopEvent.JobUnassigned(_addedWorker.Id, _addedJob.Id)
 			);
+		}
+
+		[Fact]
+		public void StartWorkOnAddedJob_Succeeds()
+		{
+			Act_StartWork(_addedJob.Id)
+				.Assert_Succeeds();
+		}
+
+		[Fact]
+		public void StartWorkOnAddedJob_UncommittedEventsContainsWorkerStatusUpdatedToBusy()
+		{
+			Act_StartWork(_addedJob.Id);
+
+			Assert_UncommittedEventsContains(
+				new WorkshopEvent.WorkerStatusUpdated(_addedWorker.Id, _addedWorker.Status.With(busy: x => true))
+			);
+		}
+
+		[Fact]
+		public void StartWorkOnAddedJob_UncommittedEventsContainsJobStatusUpdatedToBusy()
+		{
+			Act_StartWork(_addedJob.Id);
+
+			Assert_UncommittedEventsContains(
+				new WorkshopEvent.JobStatusUpdated(_addedJob.Id, _addedJob.Status.With(busy: x => true))
+			);
+		}
+
+		[Theory, WorkAutoData]
+		public void CompleteWorkOnAddedJobWithSomeQuantity_FailsWithWorkNotStarted(QuantityOfWork someQuantity)
+		{
+			someQuantity = someQuantity.ConstrainAsIncrement(_addedJob.Status);
+
+			Act_CompleteWork(_addedJob.Id, someQuantity)
+				.Assert_FailsWith(WorkshopError.WorkNotStarted);
+		}
+	}
+
+	public class AfterJobAssignedToWorkerAndStartWorkOnJob : WorkshopAggregateTestFixture
+	{
+		private readonly Worker _addedWorker = StaticFixture.Create<Worker>();
+		private readonly Job _addedJob = StaticFixture.Create<Job>();
+
+		public AfterJobAssignedToWorkerAndStartWorkOnJob()
+		{
+			Arrange_EventHistory(
+				new WorkshopEvent.JobAdded(_addedJob),
+				new WorkshopEvent.WorkerAdded(_addedWorker),
+				new WorkshopEvent.JobAssigned(_addedWorker.Id, _addedJob.Id),
+				new WorkshopEvent.WorkerStatusUpdated(_addedWorker.Id, _addedWorker.Status.With(busy: _ => true)),
+				new WorkshopEvent.JobStatusUpdated(_addedJob.Id, _addedJob.Status.With(busy: _ => true))
+			);
+		}
+
+		[Theory, WorkAutoData]
+		public void CompleteWorkOnAddedJobWithSomeQuantity_Succeeds(QuantityOfWork someQuantity)
+		{
+			someQuantity = someQuantity.ConstrainAsIncrement(_addedJob.Status);
+
+			Act_CompleteWork(_addedJob.Id, someQuantity)
+				.Assert_Succeeds();
+		}
+
+		[Theory, WorkAutoData]
+		public void CompleteWorkOnAddedJobWithSomeQuantity_UncommittedEventsContainsJobStatusUpdated(QuantityOfWork someQuantity)
+		{
+			someQuantity = someQuantity.ConstrainAsIncrement(_addedJob.Status);
+
+			Act_CompleteWork(_addedJob.Id, someQuantity);
+
+			var expectedStatus = _addedJob.Status.With(completed: x => x + someQuantity, busy: _ => false);
+
+			Assert_UncommittedEventsContains(
+				new WorkshopEvent.JobStatusUpdated(_addedJob.Id, expectedStatus)
+			);
+		}
+
+		[Theory, WorkAutoData]
+		public void CompleteWorkOnAddedJobWithSomeQuantity_UncommittedEventsContainsWorkerStatusUpdated(QuantityOfWork someQuantity)
+		{
+			someQuantity = someQuantity.ConstrainAsIncrement(_addedJob.Status);
+
+			Act_CompleteWork(_addedJob.Id, someQuantity);
+
+			var expectedStatus = _addedWorker.Status.With(busy: _ => false);
+
+			Assert_UncommittedEventsContains(
+				new WorkshopEvent.WorkerStatusUpdated(_addedWorker.Id, expectedStatus)
+			);
+		}
+
+		[Fact]
+		public void StartWorkOnAddedJob_FailsWithJobIsBusy()
+		{
+			Act_StartWork(_addedJob.Id)
+				.Assert_FailsWith(WorkshopError.JobIsBusy);
+		}
+
+		[Theory, WorkAutoData]
+		public void AssignOtherAddedWorkerToAddedJob_FailsWithJobIsBusy(Worker otherAddedWorker)
+		{
+			Arrange_EventHistory(
+				new WorkshopEvent.WorkerAdded(otherAddedWorker)
+			);
+
+			Act_AssignJob(otherAddedWorker.Id, _addedJob.Id)
+				.Assert_FailsWith(WorkshopError.JobIsBusy);
+		}
+
+		[Theory, WorkAutoData]
+		public void AssignOtherAddedJobToAddedWorker_FailsWithWorkerIsBusy(Job otherAddedJob)
+		{
+			Arrange_EventHistory(
+				new WorkshopEvent.JobAdded(otherAddedJob)
+			);
+
+			Act_AssignJob(_addedWorker.Id, otherAddedJob.Id)
+				.Assert_FailsWith(WorkshopError.WorkerIsBusy);
+		}
+
+		[Fact]
+		public void UnassignAddedWorker_FailsWithWorkerIsBusy()
+		{
+			Act_UnassignWorker(_addedWorker.Id)
+				.Assert_FailsWith(WorkshopError.WorkerIsBusy);
+		}
+	}
+
+	public class AfterJobAssignedToWorkerThenStartWorkOnJobThenCompleteWorkOnJob : WorkshopAggregateTestFixture
+	{
+		private readonly Worker _addedWorker = StaticFixture.Create<Worker>();
+		private readonly Job _addedJob = StaticFixture.Create<Job>();
+
+		public AfterJobAssignedToWorkerThenStartWorkOnJobThenCompleteWorkOnJob()
+		{
+			Arrange_EventHistory(
+				new WorkshopEvent.JobAdded(_addedJob),
+				new WorkshopEvent.WorkerAdded(_addedWorker),
+				new WorkshopEvent.JobAssigned(_addedWorker.Id, _addedJob.Id)
+			);
+
+			Act_StartWork(_addedJob.Id);
+			Act_CompleteWork(_addedJob.Id, StaticFixture.Create<QuantityOfWork>().ConstrainAsIncrement(_addedJob.Status));
+		}
+		
+		[Fact]
+		public void StartWorkOnAddedJob_Succeeds()
+		{
+			Act_StartWork(_addedJob.Id)
+				.Assert_Succeeds();
+		}
+
+		[Theory, WorkAutoData]
+		public void AssignOtherAddedWorkerToAddedJob_Succeeds(Worker otherAddedWorker)
+		{
+			Arrange_EventHistory(
+				new WorkshopEvent.WorkerAdded(otherAddedWorker)
+			);
+
+			Act_AssignJob(otherAddedWorker.Id, _addedJob.Id)
+				.Assert_Succeeds();
+		}
+
+		[Theory, WorkAutoData]
+		public void AssignOtherAddedJobToAddedWorker_Succeeds(Job otherAddedJob)
+		{
+			Arrange_EventHistory(
+				new WorkshopEvent.JobAdded(otherAddedJob)
+			);
+
+			Act_AssignJob(_addedWorker.Id, otherAddedJob.Id)
+				.Assert_Succeeds();
+		}
+
+		[Fact]
+		public void UnassignAddedWorker_Succeeds()
+		{
+			Act_UnassignWorker(_addedWorker.Id)
+				.Assert_Succeeds();
 		}
 	}
 }
