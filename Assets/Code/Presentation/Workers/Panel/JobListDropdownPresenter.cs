@@ -49,6 +49,7 @@ namespace Workshop.Presentation.Workers.Panel
 				.OfType<Dropdown.OptionData, JobListDropdownOption>()
 				.Select(option => option.JobId)
 				.Select(BuildJobSelectionCommand)
+				.Do(_ => SelectJobOption(Maybe<JobIdentifier>.Nothing))
 				.Subscribe(queueWorkshopCommands.QueueCommand);
 		}
 
