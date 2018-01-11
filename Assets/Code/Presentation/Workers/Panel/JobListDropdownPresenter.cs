@@ -33,9 +33,14 @@ namespace Workshop.Presentation.Workers.Panel
 				.Subscribe(AddJobOption);
 
 			workshopEvents
+				.OfType<WorkshopEvent, WorkshopEvent.JobAssigned>()
+				.Where(jobAssigned => jobAssigned.WorkerId == WorkerIdentifier)
+				.Subscribe(jobAssigned => SelectJobOption(jobAssigned.JobId.ToMaybe()));
+
+			workshopEvents
 				.OfType<WorkshopEvent, WorkshopEvent.JobUnassigned>()
 				.Where(jobUnassigned => jobUnassigned.WorkerId == WorkerIdentifier)
-				.Subscribe(_ => SelectNoneOption());
+				.Subscribe(_ => SelectJobOption(Maybe<JobIdentifier>.Nothing));
 
 			_jobListDropdown.onValueChanged
 				.AsObservable()
@@ -46,13 +51,21 @@ namespace Workshop.Presentation.Workers.Panel
 				.Select(BuildJobSelectionCommand)
 				.Subscribe(queueWorkshopCommands.QueueCommand);
 		}
-		
-		private void SelectNoneOption()
+
+		private void SelectJobOption(Maybe<JobIdentifier> jobId)
 		{
 			updateLock = true;
-			_jobListDropdown.value = 0;
+			_jobListDropdown.value = FindJobOption(jobId);
 			updateLock = false;
 		}
+		
+		private int FindJobOption(Maybe<JobIdentifier> maybeJobId)
+			=> _jobListDropdown.options
+				.OfType<JobListDropdownOption>()
+				.Select((option, index) => new { option, index })
+				.Single(pair => pair.option.JobId == maybeJobId)
+				.index;
+				
 
 		private void AddJobOption(JobIdentifier jobId)
 			=> AddJobOption(new JobListDropdownOption(jobId));
