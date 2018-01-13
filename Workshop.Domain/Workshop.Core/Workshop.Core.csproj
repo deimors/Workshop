@@ -43,6 +43,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AggregateCommands\AggregateCommandFailIf.cs" />
+    <Compile Include="AggregateCommands\AggregateCommandRecord.cs" />
+    <Compile Include="AggregateCommands\AggregateCommandRecordIf.cs" />
+    <Compile Include="AggregateCommands\AggregateCommandRoot.cs" />
     <Compile Include="AggregateRoot.cs" />
     <Compile Include="AggregateRootExtensions.cs" />
     <Compile Include="Function.cs" />
