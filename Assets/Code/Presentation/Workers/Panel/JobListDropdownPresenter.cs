@@ -13,7 +13,7 @@ using Zenject;
 
 namespace Workshop.Presentation.Workers.Panel
 {
-	public class JobListDropdownPresenter : MonoBehaviour, IDisplaySelectedJob
+	public class JobListDropdownPresenter : MonoBehaviour, IDisplaySelectedJob, IAddJobListDropdownOption
 	{
 		[SerializeField]
 		private Dropdown _jobListDropdown;
@@ -21,26 +21,23 @@ namespace Workshop.Presentation.Workers.Panel
 		[Inject]
 		public WorkerIdentifier WorkerIdentifier { get; }
 
+		private bool updateLock;
+
 		public Maybe<JobIdentifier> SelectedJob
 		{
 			set
 			{
-				SelectJobOption(value);
+				updateLock = true;
+				_jobListDropdown.value = FindJobOption(value);
+				updateLock = false;
 			}
 		}
-
-		private bool updateLock;
-
+		
 		[Inject]
 		public void Initialize(IObservable<WorkshopEvent> workshopEvents, IQueueWorkshopCommands queueWorkshopCommands)
 		{
 			AddJobOption(JobListDropdownOption.None);
 			
-			workshopEvents
-				.OfType<WorkshopEvent, WorkshopEvent.JobAdded>()
-				.Select(jobAdded => jobAdded.Job.Id)
-				.Subscribe(AddJobOption);
-
 			_jobListDropdown.onValueChanged
 				.AsObservable()
 				.Where(_ => !updateLock)
@@ -48,15 +45,8 @@ namespace Workshop.Presentation.Workers.Panel
 				.OfType<Dropdown.OptionData, JobListDropdownOption>()
 				.Select(option => option.JobId)
 				.Select(BuildJobSelectionCommand)
-				.Do(_ => SelectJobOption(Maybe<JobIdentifier>.Nothing))
+				.Do(_ => SelectedJob = Maybe<JobIdentifier>.Nothing)
 				.Subscribe(queueWorkshopCommands.QueueCommand);
-		}
-		
-		private void SelectJobOption(Maybe<JobIdentifier> jobId)
-		{
-			updateLock = true;
-			_jobListDropdown.value = FindJobOption(jobId);
-			updateLock = false;
 		}
 		
 		private int FindJobOption(Maybe<JobIdentifier> maybeJobId)
@@ -65,9 +55,8 @@ namespace Workshop.Presentation.Workers.Panel
 				.Select((option, index) => new { option, index })
 				.Single(pair => pair.option.JobId == maybeJobId)
 				.index;
-				
-
-		private void AddJobOption(JobIdentifier jobId)
+		
+		public void AddJobOption(JobIdentifier jobId)
 			=> AddJobOption(new JobListDropdownOption(jobId));
 
 
