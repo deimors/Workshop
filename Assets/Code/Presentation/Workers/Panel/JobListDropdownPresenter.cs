@@ -8,18 +8,27 @@ using UnityEngine.UI;
 using Workshop.Actors;
 using Workshop.Domain.Work;
 using Workshop.Domain.Work.Aggregates;
+using Workshop.UseCases.Work;
 using Zenject;
 
 namespace Workshop.Presentation.Workers.Panel
 {
-	public class JobListDropdownPresenter : MonoBehaviour
+	public class JobListDropdownPresenter : MonoBehaviour, IDisplaySelectedJob
 	{
 		[SerializeField]
 		private Dropdown _jobListDropdown;
 
 		[Inject]
 		public WorkerIdentifier WorkerIdentifier { get; }
-		
+
+		public Maybe<JobIdentifier> SelectedJob
+		{
+			set
+			{
+				SelectJobOption(value);
+			}
+		}
+
 		private bool updateLock;
 
 		[Inject]
@@ -32,16 +41,6 @@ namespace Workshop.Presentation.Workers.Panel
 				.Select(jobAdded => jobAdded.Job.Id)
 				.Subscribe(AddJobOption);
 
-			workshopEvents
-				.OfType<WorkshopEvent, WorkshopEvent.JobAssigned>()
-				.Where(jobAssigned => jobAssigned.WorkerId == WorkerIdentifier)
-				.Subscribe(jobAssigned => SelectJobOption(jobAssigned.JobId.ToMaybe()));
-
-			workshopEvents
-				.OfType<WorkshopEvent, WorkshopEvent.JobUnassigned>()
-				.Where(jobUnassigned => jobUnassigned.WorkerId == WorkerIdentifier)
-				.Subscribe(_ => SelectJobOption(Maybe<JobIdentifier>.Nothing));
-
 			_jobListDropdown.onValueChanged
 				.AsObservable()
 				.Where(_ => !updateLock)
@@ -52,7 +51,7 @@ namespace Workshop.Presentation.Workers.Panel
 				.Do(_ => SelectJobOption(Maybe<JobIdentifier>.Nothing))
 				.Subscribe(queueWorkshopCommands.QueueCommand);
 		}
-
+		
 		private void SelectJobOption(Maybe<JobIdentifier> jobId)
 		{
 			updateLock = true;
