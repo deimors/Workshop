@@ -5,83 +5,45 @@ namespace Workshop.Core
 {
 	public static class AggregateRootExtensions
 	{
-		public class AggregateCommand<TEvent, TError>
+		public interface IAggregateCommand<TEvent, TError> : IRecordEvent<TEvent>
 		{
-			public IRecordEvent<TEvent> Recorder;
+			Maybe<TError> Execute();
+		}
 
-			public AggregateCommand(IRecordEvent<TEvent> recorder)
+		public interface IValidatingAggregateCommand<TEvent, TError> : IAggregateCommand<TEvent, TError> { }
+
+		public interface IValidatedAggregateCommand<TEvent, TError> : IAggregateCommand<TEvent, TError> { }
+
+		internal class AggregateCommandRoot<TEvent, TError> : IValidatingAggregateCommand<TEvent, TError>
+		{
+			private readonly IRecordEvent<TEvent> _recorder;
+
+			public AggregateCommandRoot(IRecordEvent<TEvent> recorder)
 			{
-				Recorder = recorder ?? throw new ArgumentNullException(nameof(recorder));
+				_recorder = recorder ?? throw new ArgumentNullException(nameof(recorder));
 			}
 
-			public virtual Maybe<TError> Execute() 
+			public Maybe<TError> Execute() 
 				=> Maybe<TError>.Nothing;
+
+			public void Record(TEvent @event) 
+				=> _recorder.Record(@event);
 		}
 
-		public class AggregateCommandRecord<TEvent, TError> : AggregateCommand<TEvent, TError>
+		internal class AggregateCommandFailIf<TEvent, TError> : IValidatingAggregateCommand<TEvent, TError>
 		{
-			private readonly AggregateCommand<TEvent, TError> _parent;
-			private readonly Func<TEvent> _eventFactory;
-
-			public AggregateCommandRecord(AggregateCommand<TEvent, TError> parent, Func<TEvent> eventFactory) : base(parent.Recorder)
-			{
-				_parent = parent;
-				_eventFactory = eventFactory;
-			}
-
-			public override Maybe<TError> Execute() 
-				=> _parent.Execute()
-					.SelectOrElse(
-						error => error.ToMaybe(),
-						() =>
-						{
-							Recorder.Record(_eventFactory());
-							return Maybe<TError>.Nothing;
-						}
-					);
-		}
-
-		public class AggregateCommandRecordIf<TEvent, TError> : AggregateCommand<TEvent, TError>
-		{
-			private readonly AggregateCommand<TEvent, TError> _parent;
-			private readonly Func<bool> _predicate;
-			private readonly Func<TEvent> _eventFactory;
-
-			public AggregateCommandRecordIf(AggregateCommand<TEvent, TError> parent, Func<bool> predicate, Func<TEvent> eventFactory) : base(parent.Recorder)
-			{
-				_parent = parent;
-				_predicate = predicate;
-				_eventFactory = eventFactory;
-			}
-
-			public override Maybe<TError> Execute()
-				=> _parent.Execute()
-					.SelectOrElse(
-						error => error.ToMaybe(),
-						() =>
-						{
-							if (_predicate())
-								Recorder.Record(_eventFactory());
-
-							return Maybe<TError>.Nothing;
-						}
-					);
-		}
-
-		public class AggregateCommandFailIf<TEvent, TError> : AggregateCommand<TEvent, TError>
-		{
-			private readonly AggregateCommand<TEvent, TError> _parent;
+			private readonly IAggregateCommand<TEvent, TError> _parent;
 			private readonly Func<bool> _predicate;
 			private readonly Func<TError> _errorFactory;
-
-			public AggregateCommandFailIf(AggregateCommand<TEvent, TError> parent, Func<bool> predicate, Func<TError> errorFactory) : base(parent.Recorder)
+			
+			public AggregateCommandFailIf(IAggregateCommand<TEvent, TError> parent, Func<bool> predicate, Func<TError> errorFactory)
 			{
 				_parent = parent;
 				_predicate = predicate;
 				_errorFactory = errorFactory;
 			}
 
-			public override Maybe<TError> Execute()
+			public Maybe<TError> Execute()
 				=> _parent.Execute()
 					.SelectOrElse(
 						error => error.ToMaybe(),
@@ -89,20 +51,81 @@ namespace Workshop.Core
 							? _errorFactory().ToMaybe()
 							: Maybe<TError>.Nothing
 					);
+
+			public void Record(TEvent @event)
+				=> _parent.Record(@event);
 		}
 
-		public static AggregateCommand<TEvent, TError> BuildCommand<TEvent, TError>(this IRecordEvent<TEvent> recorder)
-			=> new AggregateCommand<TEvent, TError>(recorder);
+		internal class AggregateCommandRecord<TEvent, TError> : IValidatedAggregateCommand<TEvent, TError>
+		{
+			private readonly IAggregateCommand<TEvent, TError> _parent;
+			private readonly Func<TEvent> _eventFactory;
+			
+			public AggregateCommandRecord(IAggregateCommand<TEvent, TError> parent, Func<TEvent> eventFactory)
+			{
+				_parent = parent;
+				_eventFactory = eventFactory;
+			}
+
+			public Maybe<TError> Execute() 
+				=> _parent.Execute()
+					.SelectOrElse(
+						error => error.ToMaybe(),
+						Succeed
+					);
+			
+			public void Record(TEvent @event)
+				=> _parent.Record(@event);
+
+			private Maybe<TError> Succeed()
+			{
+				Record(_eventFactory());
+				return Maybe<TError>.Nothing;
+			}
+		}
+
+		internal class AggregateCommandRecordIf<TEvent, TError> : IValidatedAggregateCommand<TEvent, TError>
+		{
+			private readonly IAggregateCommand<TEvent, TError> _parent;
+			private readonly Func<bool> _predicate;
+			private readonly Func<TEvent> _eventFactory;
+			
+			public AggregateCommandRecordIf(IAggregateCommand<TEvent, TError> parent, Func<bool> predicate, Func<TEvent> eventFactory)
+			{
+				_parent = parent;
+				_predicate = predicate;
+				_eventFactory = eventFactory;
+			}
+
+			public Maybe<TError> Execute()
+				=> _parent.Execute()
+					.SelectOrElse(
+						error => error.ToMaybe(),
+						Succeed
+					);
+			
+			public void Record(TEvent @event)
+				=> _parent.Record(@event);
+
+			private Maybe<TError> Succeed()
+			{
+				if (_predicate())
+					Record(_eventFactory());
+
+				return Maybe<TError>.Nothing;
+			}
+		}
 		
-		public static AggregateCommand<TEvent, TError> FailIf<TEvent, TError>(this AggregateCommand<TEvent, TError> command, Func<bool> predicate, Func<TError> errorFactory)
+		public static IValidatingAggregateCommand<TEvent, TError> BuildCommand<TEvent, TError>(this IRecordEvent<TEvent> recorder)
+			=> new AggregateCommandRoot<TEvent, TError>(recorder);
+		
+		public static IValidatingAggregateCommand<TEvent, TError> FailIf<TEvent, TError>(this IValidatingAggregateCommand<TEvent, TError> command, Func<bool> predicate, Func<TError> errorFactory)
 			=> new AggregateCommandFailIf<TEvent, TError>(command, predicate, errorFactory);
 		
-		public static AggregateCommand<TEvent, TError> Record<TEvent, TError>(this AggregateCommand<TEvent, TError> command, Func<TEvent> eventFactory)
+		public static IValidatedAggregateCommand<TEvent, TError> Record<TEvent, TError>(this IAggregateCommand<TEvent, TError> command, Func<TEvent> eventFactory)
 			=> new AggregateCommandRecord<TEvent, TError>(command, eventFactory);
 		
-		public static AggregateCommand<TEvent, TError> RecordIf<TEvent, TError>(this AggregateCommand<TEvent, TError> command, Func<bool> predicate, Func<TEvent> eventFactory)
+		public static IValidatedAggregateCommand<TEvent, TError> RecordIf<TEvent, TError>(this IAggregateCommand<TEvent, TError> command, Func<bool> predicate, Func<TEvent> eventFactory)
 			=> new AggregateCommandRecordIf<TEvent, TError>(command, predicate, eventFactory);
-
-
 	}
 }
