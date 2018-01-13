@@ -12,23 +12,6 @@ namespace Workshop.Presentation
 	{
 		public override void InstallBindings()
 		{
-			Container.Bind<IWorkOnJob>()
-				.To<ApplyConstantWorkToJob>()
-				.AsSingle()
-				.WithArguments(QuantityOfWork.Unit);
-			
-			Container
-				.BindInterfacesTo<PerformAssignedWorkFromAggregate>()
-				.AsSingle();
-
-			Container
-				.Bind<JobsAssignedToWorkerReadModel>()
-				.AsSingle();
-
-			Container
-				.Bind<JobStatusReadModel>()
-				.AsSingle();
-
 			Container
 				.BindInterfacesTo<WorkshopActor>()
 				.AsSingle()

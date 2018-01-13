@@ -9,24 +9,22 @@ using Zenject;
 
 namespace Workshop.Presentation.Workers.Panel
 {
-	public class PerformWorkButtonPresenter : MonoBehaviour
+	public class WorkButtonPresenter : MonoBehaviour, IWorkButtonClickedObservable
 	{
 		[SerializeField]
-		private Button _performWorkButton;
+		private Button _workButton;
 		
 		[Inject]
-		public void Initialize(WorkerIdentifier workerId, IPerformAssignedWork performAssignedWork, IObservable<WorkshopEvent> workshopEvents)
+		public void Initialize(WorkerIdentifier workerId, IObservable<WorkshopEvent> workshopEvents)
 		{
-			_performWorkButton
-				.onClick
-				.AsObservable()
-				.Subscribe(_ => performAssignedWork.Perform(workerId));
-
 			workshopEvents
 				.OfType<WorkshopEvent, WorkshopEvent.WorkerStatusUpdated>()
 				.Where(workerStatusUpdated => workerStatusUpdated.WorkerId == workerId)
 				.Select(workerStatusUpdated => workerStatusUpdated.NewStatus.Busy)
-				.Subscribe(busy => _performWorkButton.interactable = !busy);
+				.Subscribe(busy => _workButton.interactable = !busy);
 		}
+
+		public IDisposable Subscribe(IObserver<Unit> observer)
+			=> _workButton.onClick.AsObservable().Subscribe(observer);
 	}	
 }

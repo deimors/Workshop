@@ -1,4 +1,5 @@
 ﻿using Workshop.Domain.Work;
+using Workshop.UseCases.Work;
 using Zenject;
 
 namespace Workshop.Presentation.Workers.Panel
@@ -15,6 +16,9 @@ namespace Workshop.Presentation.Workers.Panel
 			Container.Bind<WorkerPanel>().FromInstance(this);
 
 			Container.BindInstance(Identifier);
+
+			Container.Bind<AssignedJobReadModel>().AsSingle();
+			Container.Bind<WorkOnAssignedJobWhenWorkButtonClicked>().AsSingle().NonLazy();
 		}
 	}
 }

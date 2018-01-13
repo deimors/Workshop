@@ -7,23 +7,21 @@ using Workshop.Domain.Work.Aggregates;
 
 namespace Workshop.UseCases.Work
 {
-	public class PerformAssignedWorkFromAggregate : IPerformAssignedWork
+	public class WorkOnAssignedJobWhenWorkButtonClicked
 	{
-		private readonly JobsAssignedToWorkerReadModel _jobAssignments;
-		private readonly JobStatusReadModel _jobStatuses;
-		private readonly IWorkOnJob _workOnJob;
 		private readonly IQueueWorkshopCommands _queueWorkshopCommands;
 
-		public PerformAssignedWorkFromAggregate(JobsAssignedToWorkerReadModel jobAssignments, JobStatusReadModel jobStatuses, IWorkOnJob workOnJob, IQueueWorkshopCommands queueWorkshopCommands)
+		public WorkOnAssignedJobWhenWorkButtonClicked(AssignedJobReadModel assignedJobModel, IWorkButtonClickedObservable workButtonClicked, IQueueWorkshopCommands queueWorkshopCommands)
 		{
-			_jobAssignments = jobAssignments;
-			_jobStatuses = jobStatuses;
-			_workOnJob = workOnJob;
 			_queueWorkshopCommands = queueWorkshopCommands;
+			
+			workButtonClicked
+				.Select(_ => assignedJobModel.AssignedJob)
+				.Subscribe(MaybeWorkOnJob);
 		}
 
-		public void Perform(WorkerIdentifier workerId)
-			=> _jobAssignments[workerId].Match(WorkOnJob, () => { });
+		public void MaybeWorkOnJob(Maybe<JobIdentifier> maybeJobId)
+			=> maybeJobId.Match(WorkOnJob, () => { });
 
 		private void WorkOnJob(JobIdentifier jobId)
 		{
