@@ -26,7 +26,7 @@ namespace Workshop.Presentation.Workers.Panel
 				.OfType<WorkshopEvent, WorkshopEvent.WorkerStatusUpdated>()
 				.Where(workerStatusUpdated => workerStatusUpdated.WorkerId == workerId)
 				.Select(workerStatusUpdated => workerStatusUpdated.NewStatus.Busy)
-				.Subscribe(busyStatus => _performWorkButton.interactable = !busyStatus);
+				.Subscribe(busy => _performWorkButton.interactable = !busy);
 		}
 	}	
 }
