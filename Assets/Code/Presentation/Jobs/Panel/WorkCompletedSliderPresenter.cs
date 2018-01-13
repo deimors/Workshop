@@ -1,45 +1,20 @@
-﻿using System;
-using System.Linq;
-using UniRx;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
-using Workshop.Domain.Work;
-using Workshop.Domain.Work.Aggregates;
-using Zenject;
+using Workshop.UseCases.Work;
 
 namespace Workshop.Presentation.Jobs.Panel
 {
-	public class WorkCompletedSliderPresenter : MonoBehaviour
+	public class WorkCompletedSliderPresenter : MonoBehaviour, IDisplayJobCompletion
 	{
 		[SerializeField]
 		private Slider _completedSlider;
 
-		[Inject]
-		public JobIdentifier JobId { get; }
-
-		[Inject]
-		public void Initialize(IObservable<WorkshopEvent> workshopEvents)
+		public float PercentComplete
 		{
-			var addedStatus = workshopEvents
-				.OfType<WorkshopEvent, WorkshopEvent.JobAdded>()
-				.Where(jobAdded => jobAdded.Job.Id == JobId)
-				.Select(jobAdded => jobAdded.Job.Status);
-
-			var updatedStatus = workshopEvents
-				.OfType<WorkshopEvent, WorkshopEvent.JobStatusUpdated>()
-				.Where(jobStatusUpdated => jobStatusUpdated.JobId == JobId)
-				.Select(jobStatusUpdated => jobStatusUpdated.NewStatus);
-
-			addedStatus
-				.Merge(updatedStatus)
-				.Select(GetPercentageComplete)
-				.Subscribe(SetSliderValue);
+			set
+			{
+				_completedSlider.value = value;
+			}
 		}
-		
-		private static float GetPercentageComplete(JobStatus jobStatus) 
-			=> jobStatus.Completed / jobStatus.Total;
-
-		private void SetSliderValue(float percentage)
-			=> _completedSlider.value = percentage;
 	}
 }

@@ -21,6 +21,7 @@ namespace Workshop.Presentation.Jobs.Panel
 
 			Container.Bind<UpdateAssignedWorkDisplayWhenJobAssigned>().AsSingle().NonLazy();
 			Container.Bind<UpdateAssignedWorkDisplayWhenJobAddedOrUnassigned>().AsSingle().NonLazy();
+			Container.Bind<UpdateJobCompletionWhenJobAddedOrStatusUpdated>().AsSingle().NonLazy();
 		}
 	}
 }
