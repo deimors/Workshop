@@ -32,47 +32,55 @@ namespace Workshop.Presentation.Workers.Panel
 
 		[SerializeField]
 		private Dropdown _jobListDropdown;
-		
-		private bool updateLock;
 
 		private IObservable<Maybe<JobIdentifier>> _jobSelectionObservable;
+
+		private Maybe<JobIdentifier> _selectedJob = Maybe<JobIdentifier>.Nothing;
+
+		[Inject]
+		public void Initialize()
+		{
+			AddJobOption(DropdownOption.None);
+
+			_jobSelectionObservable = BuildJobSelectionObservable();
+		}
 
 		public Maybe<JobIdentifier> SelectedJob
 		{
 			set
 			{
-				updateLock = true;
-				_jobListDropdown.value = FindJobOption(value);
-				updateLock = false;
+				FindJobOption(value).Match(
+					index => 
+					{
+						_selectedJob = value;
+						_jobListDropdown.value = index;
+					},
+					() => Debug.LogError($"Could not find Job Option for {value}")
+				);
 			}
 		}
-
+		
 		public void AddJobOption(JobIdentifier jobId)
 			=> AddJobOption(new DropdownOption(jobId));
 
 		public IDisposable Subscribe(IObserver<Maybe<JobIdentifier>> observer)
 			=> _jobSelectionObservable.Subscribe(observer);
 		
-		[Inject]
-		public void Initialize()
-		{
-			AddJobOption(DropdownOption.None);
-
-			_jobSelectionObservable = _jobListDropdown.onValueChanged
+		private IObservable<Maybe<JobIdentifier>> BuildJobSelectionObservable() 
+			=> _jobListDropdown.onValueChanged
 				.AsObservable()
-				.Where(_ => !updateLock)
 				.Select(selectedIndex => _jobListDropdown.options[selectedIndex])
 				.OfType<Dropdown.OptionData, DropdownOption>()
-				.Do(_ => SelectedJob = Maybe<JobIdentifier>.Nothing)
+				.Where(option => option.JobId != _selectedJob)
+				.Do(_ => SelectedJob = _selectedJob)
 				.Select(option => option.JobId);
-		}
-		
-		private int FindJobOption(Maybe<JobIdentifier> maybeJobId)
+
+		private Maybe<int> FindJobOption(Maybe<JobIdentifier> maybeJobId)
 			=> _jobListDropdown.options
 				.OfType<DropdownOption>()
 				.Select((option, index) => new { option, index })
-				.Single(pair => pair.option.JobId == maybeJobId)
-				.index;
+				.SingleMaybe(pair => pair.option.JobId == maybeJobId)
+				.Select(pair => pair.index);
 		
 		private void AddJobOption(DropdownOption option)
 			=> _jobListDropdown.AddOptions(new List<Dropdown.OptionData> { option });	
