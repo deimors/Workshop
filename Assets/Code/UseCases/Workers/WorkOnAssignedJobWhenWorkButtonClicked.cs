@@ -9,11 +9,11 @@ namespace Workshop.UseCases.Work
 {
 	public class WorkOnAssignedJobWhenWorkButtonClicked
 	{
-		private readonly IQueueWorkshopCommands _queueWorkshopCommands;
+		private readonly IEnqueueCommand<WorkshopCommand> _workshopCommands;
 
-		public WorkOnAssignedJobWhenWorkButtonClicked(AssignedJobReadModel assignedJobModel, IWorkButtonClickedObservable workButtonClicked, IQueueWorkshopCommands queueWorkshopCommands)
+		public WorkOnAssignedJobWhenWorkButtonClicked(AssignedJobReadModel assignedJobModel, IWorkButtonClickedObservable workButtonClicked, IEnqueueCommand<WorkshopCommand> workshopCommands)
 		{
-			_queueWorkshopCommands = queueWorkshopCommands;
+			_workshopCommands = workshopCommands;
 			
 			workButtonClicked
 				.Select(_ => assignedJobModel.AssignedJob)
@@ -35,9 +35,9 @@ namespace Workshop.UseCases.Work
 				.Subscribe(CompleteWorkOnJob);
 
 		private void StartWorkOnJob(JobIdentifier jobId)
-			=> _queueWorkshopCommands.QueueCommand(new WorkshopCommand.StartWork(jobId));
+			=> _workshopCommands.Enqueue(new WorkshopCommand.StartWork(jobId));
 
 		private void CompleteWorkOnJob(JobIdentifier jobId)
-			=> _queueWorkshopCommands.QueueCommand(new WorkshopCommand.CompleteWork(jobId, QuantityOfWork.Unit));
+			=> _workshopCommands.Enqueue(new WorkshopCommand.CompleteWork(jobId, QuantityOfWork.Unit));
 	}
 }

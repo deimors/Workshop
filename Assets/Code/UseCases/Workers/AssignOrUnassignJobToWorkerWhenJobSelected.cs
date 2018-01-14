@@ -8,11 +8,11 @@ namespace Workshop.UseCases.Work
 {
 	public class AssignOrUnassignJobToWorkerWhenJobSelected
 	{
-		public AssignOrUnassignJobToWorkerWhenJobSelected(WorkerIdentifier workerId, IJobSelectedObservable jobSelectedObservable, IQueueWorkshopCommands queueWorkshopCommands)
+		public AssignOrUnassignJobToWorkerWhenJobSelected(WorkerIdentifier workerId, IJobSelectedObservable jobSelectedObservable, IEnqueueCommand<WorkshopCommand> workshopCommands)
 		{
 			jobSelectedObservable
 				.Select(maybeJobId => BuildJobSelectionCommand(maybeJobId, workerId))
-				.Subscribe(queueWorkshopCommands.QueueCommand);
+				.Subscribe(workshopCommands.Enqueue);
 		}
 
 		private WorkshopCommand BuildJobSelectionCommand(Maybe<JobIdentifier> maybeJobId, WorkerIdentifier workerId)

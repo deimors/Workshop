@@ -17,11 +17,11 @@ namespace Workshop.Presentation.Jobs
 		private float _quantityOfWork = 5;
 
 		[Inject]
-		public void Initialize(IQueueWorkshopCommands queueWorkshopCommands) 
+		public void Initialize(IEnqueueCommand<WorkshopCommand> workshopCommands) 
 			=> _addButton.onClick
 				.AsObservable()
 				.Select(_ => CreateAddJobCommand())
-				.Subscribe(queueWorkshopCommands.QueueCommand);
+				.Subscribe(workshopCommands.Enqueue);
 
 		private WorkshopCommand CreateAddJobCommand()
 			=> new WorkshopCommand.AddJob(CreateNewJob());

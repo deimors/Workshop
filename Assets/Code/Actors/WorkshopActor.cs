@@ -21,13 +21,13 @@ namespace Workshop.Actors
 			Error = error;
 		}
 	}
-
-	public interface IQueueWorkshopCommands
+	
+	public interface IEnqueueCommand<TCommand>
 	{
-		void QueueCommand(WorkshopCommand command);
+		void Enqueue(TCommand command);
 	}
 
-	public class WorkshopActor : IObservable<WorkshopEvent>, IQueueWorkshopCommands
+	public class WorkshopActor : IObservable<WorkshopEvent>, IEnqueueCommand<WorkshopCommand>
 	{
 		private readonly WorkshopAggregate _workshopAggregate = new WorkshopAggregate();
 
@@ -47,7 +47,7 @@ namespace Workshop.Actors
 				.Concat(_eventSubject)
 				.Subscribe(observer);
 
-		public void QueueCommand(WorkshopCommand command)
+		public void Enqueue(WorkshopCommand command)
 			=> _commandQueue.Enqueue(command);
 
 		private void ProcessQueue()

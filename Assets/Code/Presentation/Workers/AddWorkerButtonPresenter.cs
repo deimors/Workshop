@@ -14,12 +14,12 @@ namespace Workshop.Presentation.Workers
 		private Button _addButton;
 		
 		[Inject]
-		public void Initialize(IQueueWorkshopCommands queueWorkshopCommands)
+		public void Initialize(IEnqueueCommand<WorkshopCommand> workshopCommands)
 		{
 			_addButton.onClick
 				.AsObservable()
 				.Select(_ => CreateAddWorkerCommand())
-				.Subscribe(queueWorkshopCommands.QueueCommand);
+				.Subscribe(workshopCommands.Enqueue);
 		}
 
 		private WorkshopCommand CreateAddWorkerCommand()
