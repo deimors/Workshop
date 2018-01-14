@@ -2,6 +2,7 @@
 using OneOf;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using UniRx;
 using UnityEngine;
@@ -50,7 +51,7 @@ namespace Workshop.Actors
 
 	public interface ICommandQueueItem<TCommand, TError>
 	{
-		void Process(IHandleCommand<TCommand, TError> commandHandler, Action commitEvents);
+		void Process(IHandleCommand<TCommand, TError> commandHandler, Action onSuccess, Action<TError> onFailure);
 	}
 
 	public class CommandQueueItem<TCommand, TError> : ICommandQueueItem<TCommand, TError>
@@ -64,24 +65,19 @@ namespace Workshop.Actors
 			_command = command;
 		}
 		
-		public void Process(IHandleCommand<TCommand, TError> commandHandler, Action commitEvents)
+		public virtual void Process(IHandleCommand<TCommand, TError> commandHandler, Action onSuccess, Action<TError> onFailure)
 		{
 			if (_processed)
 				throw new Exception("Command already processed");
 
 			commandHandler
 				.HandleCommand(_command)
-				.Match(
-					OnError, 
-					() => { commitEvents(); OnSuccess(); }
-				);
+				.Match(onFailure, onSuccess);
 
 			_processed = true;
 		}
 
-		protected virtual void OnSuccess() { }
-
-		protected virtual void OnError(TError error)
+		void OnError(TError error)
 			=> Debug.LogError($"{_command.GetType().Name} threw {error.ToString()}");
 	}
 
@@ -93,23 +89,80 @@ namespace Workshop.Actors
 
 		public IDisposable Subscribe(IObserver<CommandResult<TError>> observer)
 			=> _resultSubject.Subscribe(observer);
-		
-		protected override void OnError(TError error)
-			=> _resultSubject.OnNext(new CommandResult<TError>.Failure(error));
 
-		protected override void OnSuccess()
-			=> _resultSubject.OnNext(new CommandResult<TError>.Success());
+		public override void Process(IHandleCommand<TCommand, TError> commandHandler, Action onSuccess, Action<TError> onFailure) 
+			=> base.Process(
+				commandHandler, 
+				() => { onSuccess(); SendSuccessResult(); }, 
+				error => { onFailure(error); SendErrorResult(error); }
+			);
+
+		private void SendErrorResult(TError error)
+		{
+			_resultSubject.OnNext(new CommandResult<TError>.Failure(error));
+			_resultSubject.OnCompleted();
+		}
+
+		private void SendSuccessResult()
+		{
+			_resultSubject.OnNext(new CommandResult<TError>.Success());
+			_resultSubject.OnCompleted();
+		}
+	}
+
+	public class CommandQueue<TCommand, TError> : IEnqueueCommand<TCommand>, IEnqueueCommand<TCommand, TError>
+	{
+		private readonly ConcurrentQueue<ICommandQueueItem<TCommand, TError>> _commandQueue = new ConcurrentQueue<ICommandQueueItem<TCommand, TError>>();
+
+		void IEnqueueCommand<TCommand>.Enqueue(TCommand command)
+			=> _commandQueue.Enqueue(new CommandQueueItem<TCommand, TError>(command));
+
+		IObservable<CommandResult<TError>> IEnqueueCommand<TCommand, TError>.Enqueue(TCommand command)
+		{
+			var queueItem = new ObservableCommandQueueItem<TCommand, TError>(command);
+			_commandQueue.Enqueue(queueItem);
+			return queueItem;
+		}
+
+		public void ProcessQueue(IHandleCommand<TCommand, TError> commandHandler, Action commit, Action<TError> onError)
+		{
+			ICommandQueueItem<TCommand, TError> queueItem;
+
+			while (_commandQueue.TryDequeue(out queueItem))
+				queueItem.Process(commandHandler, commit, onError);
+		}
+	}
+
+	public class EventHistory<TEvent> : IObservable<TEvent>
+	{
+		private readonly ConcurrentQueue<TEvent> _eventHistory = new ConcurrentQueue<TEvent>();
+
+		private readonly ISubject<TEvent> _eventSubject = new Subject<TEvent>();
+
+		public IDisposable Subscribe(IObserver<TEvent> observer)
+			=> _eventHistory.ToObservable()
+				.Concat(_eventSubject)
+				.Subscribe(observer);
+
+		public void CommitEvents(IEnumerable<TEvent> uncommittedEvents)
+		{
+			uncommittedEvents = uncommittedEvents.ToArray();
+			
+			foreach (var newEvent in uncommittedEvents)
+				_eventHistory.Enqueue(newEvent);
+			
+			foreach (var newEvent in uncommittedEvents)
+				_eventSubject.OnNext(newEvent);
+		}
 	}
 
 	public class WorkshopActor : IObservable<WorkshopEvent>, IEnqueueCommand<WorkshopCommand>, IEnqueueCommand<WorkshopCommand, WorkshopError>
 	{
 		private readonly WorkshopAggregate _workshopAggregate = new WorkshopAggregate();
 
-		private readonly ConcurrentQueue<WorkshopEvent> _eventHistory = new ConcurrentQueue<WorkshopEvent>();
+		private readonly CommandQueue<WorkshopCommand, WorkshopError> _commandQueue = new CommandQueue<WorkshopCommand, WorkshopError>();
 
-		private readonly ConcurrentQueue<ICommandQueueItem<WorkshopCommand, WorkshopError>> _commandQueue = new ConcurrentQueue<ICommandQueueItem<WorkshopCommand, WorkshopError>>();
-
-		private readonly ISubject<WorkshopEvent> _eventSubject = new Subject<WorkshopEvent>();
+		private readonly EventHistory<WorkshopEvent> _history = new EventHistory<WorkshopEvent>();
 
 		public WorkshopActor(IObservable<Unit> processQueueTicks)
 		{
@@ -117,41 +170,26 @@ namespace Workshop.Actors
 		}
 
 		public IDisposable Subscribe(IObserver<WorkshopEvent> observer)
-			=> _eventHistory.ToObservable()
-				.Concat(_eventSubject)
-				.Subscribe(observer);
+			=> _history.Subscribe(observer);
 
-		public void Enqueue(WorkshopCommand command)
-			=> _commandQueue.Enqueue(new CommandQueueItem<WorkshopCommand, WorkshopError>(command));
+		void IEnqueueCommand<WorkshopCommand>.Enqueue(WorkshopCommand command)
+			=> (_commandQueue as IEnqueueCommand<WorkshopCommand>).Enqueue(command);
 
 		IObservable<CommandResult<WorkshopError>> IEnqueueCommand<WorkshopCommand, WorkshopError>.Enqueue(WorkshopCommand command)
-		{
-			var queueItem = new ObservableCommandQueueItem<WorkshopCommand, WorkshopError>(command);
-			_commandQueue.Enqueue(queueItem);
-			return queueItem;
-		}
+			=> (_commandQueue as IEnqueueCommand<WorkshopCommand, WorkshopError>).Enqueue(command);
 
 		private void ProcessQueue()
-		{
-			ICommandQueueItem<WorkshopCommand, WorkshopError> queueItem;
-
-			while (_commandQueue.TryDequeue(out queueItem))
-				queueItem.Process(_workshopAggregate, CommitEvents);
-		}
+			=> _commandQueue.ProcessQueue(
+				_workshopAggregate,
+				CommitEvents,
+				error => Debug.LogError($"Error: {error.ToString()}")
+			);
 
 		private void CommitEvents()
 		{
-			var uncommittedEvents = _workshopAggregate.UncommittedEvents.ToArray();
-
-			foreach (var newEvent in uncommittedEvents)
-				_eventHistory.Enqueue(newEvent);
+			_history.CommitEvents(_workshopAggregate.UncommittedEvents);
 			
 			_workshopAggregate.MarkCommitted();
-
-			foreach (var newEvent in uncommittedEvents)
-				_eventSubject.OnNext(newEvent);
 		}
-
-		
 	}
 }
