@@ -21,6 +21,8 @@ namespace Workshop.Presentation.Workers.Panel
 
 			Container.Bind<WorkOnAssignedJobWhenWorkButtonClicked>().AsSingle().NonLazy();
 			Container.Bind<UpdateWorkButtonInteractableWhenWorkerStatusUpdated>().AsSingle().NonLazy();
+			Container.Bind<SetWorkButtonNotInteractableWhenWorkerAdded>().AsSingle().NonLazy();
+			Container.Bind<UpdateWorkButtonInteractableWhenWorkerAssignedOrUnassigned>().AsSingle().NonLazy();
 			Container.Bind<UpdateSelectedJobWhenJobAssignedOrJobUnassignedToWorker>().AsSingle().NonLazy();
 			Container.Bind<AddJobListDropdownOptionWhenJobAdded>().AsSingle().NonLazy();
 			Container.Bind<AssignOrUnassignJobToWorkerWhenJobSelected>().AsSingle().NonLazy();
