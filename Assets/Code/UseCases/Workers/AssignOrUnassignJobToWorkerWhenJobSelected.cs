@@ -13,11 +13,11 @@ namespace Workshop.UseCases.Work
 
 	public class AssignOrUnassignJobToWorkerWhenJobSelected
 	{
-		public AssignOrUnassignJobToWorkerWhenJobSelected(WorkerIdentifier workerId, IJobSelectedObservable jobSelectedObservable, IEnqueueCommand<WorkshopCommand, WorkshopError> workshopCommands, IDisplayJobListDropdownValidation displayValidation)
+		public AssignOrUnassignJobToWorkerWhenJobSelected(WorkerIdentifier workerId, IJobSelectedObservable jobSelectedObservable, IEnqueueObservableCommand<WorkshopCommand, WorkshopError> workshopCommands, IDisplayJobListDropdownValidation displayValidation)
 		{
 			jobSelectedObservable
 				.Select(maybeJobId => BuildJobSelectionCommand(maybeJobId, workerId))
-				.SelectMany(command => workshopCommands.Enqueue(command))
+				.SelectMany(command => workshopCommands.ObserveResult(command))
 				.Subscribe(result => result.Switch(success => { }, failure => displayValidation.ShowError(failure.Error)));
 		}
 		
