@@ -51,7 +51,7 @@ namespace Workshop.Actors
 
 	public interface ICommandQueueItem<TCommand, TError>
 	{
-		void Process(IHandleCommand<TCommand, TError> commandHandler, Action onSuccess, Action<TError> onFailure);
+		Maybe<TError> Process(IHandleCommand<TCommand, TError> commandHandler);
 	}
 
 	public class CommandQueueItem<TCommand, TError> : ICommandQueueItem<TCommand, TError>
@@ -65,20 +65,15 @@ namespace Workshop.Actors
 			_command = command;
 		}
 		
-		public virtual void Process(IHandleCommand<TCommand, TError> commandHandler, Action onSuccess, Action<TError> onFailure)
+		public virtual Maybe<TError> Process(IHandleCommand<TCommand, TError> commandHandler)
 		{
 			if (_processed)
 				throw new Exception("Command already processed");
 
-			commandHandler
-				.HandleCommand(_command)
-				.Match(onFailure, onSuccess);
-
 			_processed = true;
-		}
 
-		void OnError(TError error)
-			=> Debug.LogError($"{_command.GetType().Name} threw {error.ToString()}");
+			return commandHandler.HandleCommand(_command);	
+		}
 	}
 
 	public class ObservableCommandQueueItem<TCommand, TError> : CommandQueueItem<TCommand, TError>, IObservable<CommandResult<TError>>
@@ -90,12 +85,8 @@ namespace Workshop.Actors
 		public IDisposable Subscribe(IObserver<CommandResult<TError>> observer)
 			=> _resultSubject.Subscribe(observer);
 
-		public override void Process(IHandleCommand<TCommand, TError> commandHandler, Action onSuccess, Action<TError> onFailure) 
-			=> base.Process(
-				commandHandler, 
-				() => { onSuccess(); SendSuccessResult(); }, 
-				error => { onFailure(error); SendErrorResult(error); }
-			);
+		public override Maybe<TError> Process(IHandleCommand<TCommand, TError> commandHandler) 
+			=> base.Process(commandHandler).Match(SendErrorResult, SendSuccessResult);
 
 		private void SendErrorResult(TError error)
 		{
@@ -114,6 +105,15 @@ namespace Workshop.Actors
 	{
 		private readonly ConcurrentQueue<ICommandQueueItem<TCommand, TError>> _commandQueue = new ConcurrentQueue<ICommandQueueItem<TCommand, TError>>();
 
+		private readonly Action commit;
+		private readonly Action<TError> onError;
+
+		public CommandQueue(Action commit, Action<TError> onError)
+		{
+			this.commit = commit;
+			this.onError = onError;
+		}
+
 		void IEnqueueCommand<TCommand>.Enqueue(TCommand command)
 			=> _commandQueue.Enqueue(new CommandQueueItem<TCommand, TError>(command));
 
@@ -124,12 +124,12 @@ namespace Workshop.Actors
 			return queueItem;
 		}
 
-		public void ProcessQueue(IHandleCommand<TCommand, TError> commandHandler, Action commit, Action<TError> onError)
+		public void ProcessQueue(IHandleCommand<TCommand, TError> commandHandler)
 		{
 			ICommandQueueItem<TCommand, TError> queueItem;
 
 			while (_commandQueue.TryDequeue(out queueItem))
-				queueItem.Process(commandHandler, commit, onError);
+				queueItem.Process(commandHandler).Match(onError, commit);
 		}
 	}
 
@@ -160,12 +160,14 @@ namespace Workshop.Actors
 	{
 		private readonly WorkshopAggregate _workshopAggregate = new WorkshopAggregate();
 
-		private readonly CommandQueue<WorkshopCommand, WorkshopError> _commandQueue = new CommandQueue<WorkshopCommand, WorkshopError>();
+		private readonly CommandQueue<WorkshopCommand, WorkshopError> _commandQueue;
 
 		private readonly EventHistory<WorkshopEvent> _history = new EventHistory<WorkshopEvent>();
 
 		public WorkshopActor(IObservable<Unit> processQueueTicks)
 		{
+			_commandQueue = new CommandQueue<WorkshopCommand, WorkshopError>(CommitEvents, OnError);
+
 			processQueueTicks.Subscribe(_ => ProcessQueue());
 		}
 
@@ -179,11 +181,7 @@ namespace Workshop.Actors
 			=> (_commandQueue as IEnqueueCommand<WorkshopCommand, WorkshopError>).Enqueue(command);
 
 		private void ProcessQueue()
-			=> _commandQueue.ProcessQueue(
-				_workshopAggregate,
-				CommitEvents,
-				error => Debug.LogError($"Error: {error.ToString()}")
-			);
+			=> _commandQueue.ProcessQueue(_workshopAggregate);
 
 		private void CommitEvents()
 		{
@@ -191,5 +189,8 @@ namespace Workshop.Actors
 			
 			_workshopAggregate.MarkCommitted();
 		}
+
+		private void OnError(WorkshopError error)
+			=> Debug.LogError($"Error: {error.ToString()}");
 	}
 }
