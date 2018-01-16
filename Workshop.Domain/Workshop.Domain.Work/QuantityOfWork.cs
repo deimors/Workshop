@@ -48,6 +48,12 @@ namespace Workshop.Domain.Work
 
 		public static bool operator >(QuantityOfWork left, QuantityOfWork right)
 			=> left._value > right._value;
+
+		public static bool operator ==(QuantityOfWork left, QuantityOfWork right)
+			=> Equals(left, right);
+
+		public static bool operator !=(QuantityOfWork left, QuantityOfWork right)
+			=> !Equals(left, right);
 	}
 
 	public static class QuantityOfWorkExtensions

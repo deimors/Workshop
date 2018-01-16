@@ -432,6 +432,23 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		}
 
 		[Fact]
+		public void CompleteWorkOnAddedJobWithRemainingQuantity_Succeeds()
+		{
+			Act_CompleteWork(_addedJob.Id, _addedJob.Status.Total  - _addedJob.Status.Completed)
+				.Assert_Succeeds();
+		}
+
+		[Fact]
+		public void CompleteWorkOnAddedJobWithRemainingQuantity_UncommittedEventsContainsJobUnassigned()
+		{
+			Act_CompleteWork(_addedJob.Id, _addedJob.Status.Total - _addedJob.Status.Completed);
+
+			Assert_UncommittedEventsContains(
+				new WorkshopEvent.JobUnassigned(_addedWorker.Id, _addedJob.Id)
+			);
+		}
+
+		[Fact]
 		public void StartWorkOnAddedJob_FailsWithJobIsBusy()
 		{
 			Act_StartWork(_addedJob.Id)
@@ -519,6 +536,31 @@ namespace Workshop.Domain.Work.Aggregates.Tests
 		{
 			Act_UnassignWorker(_addedWorker.Id)
 				.Assert_Succeeds();
+		}
+	}
+
+	public class AfterJobAssignedToWorkerThenStartWorkOnJobThenCompleteRemainingWorkOnJob : WorkshopAggregateTestFixture
+	{
+		private readonly Worker _addedWorker = StaticFixture.Create<Worker>();
+		private readonly Job _addedJob = StaticFixture.Create<Job>();
+
+		public AfterJobAssignedToWorkerThenStartWorkOnJobThenCompleteRemainingWorkOnJob()
+		{
+			Arrange_EventHistory(
+				new WorkshopEvent.JobAdded(_addedJob),
+				new WorkshopEvent.WorkerAdded(_addedWorker),
+				new WorkshopEvent.JobAssigned(_addedWorker.Id, _addedJob.Id)
+			);
+
+			Act_StartWork(_addedJob.Id);
+			Act_CompleteWork(_addedJob.Id, _addedJob.Status.Total - _addedJob.Status.Completed);
+		}
+
+		[Fact]
+		public void AssignWorkerToJob_Fails()
+		{
+			Act_AssignJob(_addedWorker.Id, _addedJob.Id)
+				.Assert_FailsWith(WorkshopError.JobCompleted);
 		}
 	}
 }

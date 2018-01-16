@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Workshop.Core;
 
 namespace Workshop.Domain.Work
@@ -9,6 +8,8 @@ namespace Workshop.Domain.Work
 		public QuantityOfWork Total { get; }
 
 		public QuantityOfWork Completed { get; }
+
+		public bool IsCompleted => Total == Completed;
 
 		public bool Busy { get; }
 

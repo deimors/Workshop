@@ -9,6 +9,7 @@
 		WorkerNotAssigned,
 		WorkNotStarted,
 		JobIsBusy,
-		WorkerIsBusy
+		WorkerIsBusy,
+		JobCompleted
 	}
 }
