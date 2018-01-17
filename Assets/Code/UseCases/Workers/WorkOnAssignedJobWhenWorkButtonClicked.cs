@@ -1,6 +1,7 @@
 ﻿using Functional.Maybe;
 using System;
 using UniRx;
+using UnityEngine;
 using Workshop.Actors;
 using Workshop.Domain.Work;
 using Workshop.Domain.Work.Aggregates;
@@ -9,11 +10,15 @@ namespace Workshop.UseCases.Work
 {
 	public class WorkOnAssignedJobWhenWorkButtonClicked
 	{
-		private readonly IEnqueueCommand<WorkshopCommand> _workshopCommands;
+		private readonly TimeSpan _delay = TimeSpan.FromSeconds(2);
 
-		public WorkOnAssignedJobWhenWorkButtonClicked(AssignedJobReadModel assignedJobModel, IWorkButtonClickedObservable workButtonClicked, IEnqueueCommand<WorkshopCommand> workshopCommands)
+		private readonly IEnqueueCommand<WorkshopCommand> _workshopCommands;
+		private readonly IDisplayProgress _displayProgress;
+
+		public WorkOnAssignedJobWhenWorkButtonClicked(AssignedJobReadModel assignedJobModel, IWorkButtonClickedObservable workButtonClicked, IEnqueueCommand<WorkshopCommand> workshopCommands, IDisplayProgress displayProgress)
 		{
 			_workshopCommands = workshopCommands;
+			_displayProgress = displayProgress;
 			
 			workButtonClicked
 				.Select(_ => assignedJobModel.AssignedJob)
@@ -26,16 +31,24 @@ namespace Workshop.UseCases.Work
 		private void WorkOnJob(JobIdentifier jobId)
 		{
 			StartWorkOnJob(jobId);
-			CompleteWorkOnJobAfterDelay(jobId);
+			CompleteWorkOnJobAfterDelay(jobId, _delay);
 		}
-
-		private void CompleteWorkOnJobAfterDelay(JobIdentifier jobId)
-			=> Observable.Timer(TimeSpan.FromSeconds(2))
-				.Select(_ => jobId)
-				.Subscribe(CompleteWorkOnJob);
-
+		
 		private void StartWorkOnJob(JobIdentifier jobId)
 			=> _workshopCommands.Enqueue(new WorkshopCommand.StartWork(jobId));
+
+		private void CompleteWorkOnJobAfterDelay(JobIdentifier jobId, TimeSpan delay)
+			=> CompleteWorkOnJobAfterDelay(jobId, Time.time, (float)delay.TotalSeconds);
+
+		private void CompleteWorkOnJobAfterDelay(JobIdentifier jobId, float startTime, float delaySeconds)
+			=> Observable.EveryUpdate()
+				.Take(TimeSpan.FromSeconds(delaySeconds))
+				.Select(_ => (Time.time - startTime) / delaySeconds)
+				.Select(progress => Mathf.Clamp01(progress) % 1f)
+				.Subscribe(
+					_displayProgress.ShowProgress,
+					() => CompleteWorkOnJob(jobId)
+				);
 
 		private void CompleteWorkOnJob(JobIdentifier jobId)
 			=> _workshopCommands.Enqueue(new WorkshopCommand.CompleteWork(jobId, QuantityOfWork.Unit));

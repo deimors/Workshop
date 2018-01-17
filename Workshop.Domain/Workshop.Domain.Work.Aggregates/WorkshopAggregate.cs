@@ -53,7 +53,7 @@ namespace Workshop.Domain.Work.Aggregates
 				.Execute();
 
 		private Maybe<WorkshopError> CompleteWork(WorkshopCommand.CompleteWork command)
-			=> (this).BuildCommand<WorkshopEvent, WorkshopError>()
+			=> this.BuildCommand<WorkshopEvent, WorkshopError>()
 				.FailIf(() => !State.Jobs.ContainsKey(command.JobId), () => WorkshopError.UnknownJob)
 				.FailIf(() => !State.Assignments.ContainsKey(command.JobId), () => WorkshopError.WorkerNotAssigned)
 				.FailIf(() => !State.Jobs[command.JobId].Status.Busy, () => WorkshopError.WorkNotStarted)
