@@ -70,7 +70,7 @@ GameObject:
   - component: {fileID: 222208597568410648}
   - component: {fileID: 114478765654876200}
   m_Layer: 5
-  m_Name: Assigned Text
+  m_Name: Job Status Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -107,7 +107,7 @@ GameObject:
   - component: {fileID: 114681529079026030}
   - component: {fileID: 114798614648512200}
   - component: {fileID: 114271015952195326}
-  - component: {fileID: 114670512653639134}
+  - component: {fileID: 114867583115024132}
   - component: {fileID: 114474452088985868}
   m_Layer: 5
   m_Name: Job Panel
@@ -189,7 +189,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Assigned Text
+  m_Text: Job Status
 --- !u!114 &114577987099869558
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -244,18 +244,6 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
---- !u!114 &114670512653639134
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1924418783755538}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5c3411186c15cdf4da0177306571b15e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _assignedWorkText: {fileID: 114478765654876200}
 --- !u!114 &114674282937839612
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -355,11 +343,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _components:
   - {fileID: 114271015952195326}
-  - {fileID: 114670512653639134}
+  - {fileID: 114867583115024132}
   - {fileID: 114474452088985868}
   _identifier: 
   _context: {fileID: 114931039464256436}
   _bindType: 1
+--- !u!114 &114867583115024132
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1924418783755538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 586e53072d3493747a9eb376dce0b37c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _jobStatusText: {fileID: 114478765654876200}
 --- !u!114 &114908285763122402
 MonoBehaviour:
   m_ObjectHideFlags: 1

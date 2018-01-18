@@ -5,15 +5,15 @@ using Workshop.Domain.Work.Aggregates;
 
 namespace Workshop.UseCases.Work
 {
-	public class UpdateAssignedWorkDisplayWhenJobAssigned
+	public class UpdateJobStatusDisplayWhenJobAssigned
 	{
-		public UpdateAssignedWorkDisplayWhenJobAssigned(JobIdentifier jobId, IObservable<WorkshopEvent> workshopEvents, IDisplayAssignedWork displayAssignedWork)
+		public UpdateJobStatusDisplayWhenJobAssigned(JobIdentifier jobId, IObservable<WorkshopEvent> workshopEvents, IDisplayJobStatus displayAssignedWork)
 		{
 			workshopEvents
 				.OfType<WorkshopEvent, WorkshopEvent.JobAssigned>()
 				.Where(jobAssigned => jobAssigned.JobId == jobId)
 				.Select(jobAssigned => $"Assigned to {jobAssigned.WorkerId.ToString()}")
-				.Subscribe(assignmentText => displayAssignedWork.AssignedWork = assignmentText);
+				.Subscribe(assignmentText => displayAssignedWork.Status = assignmentText);
 		}
 	}
 }

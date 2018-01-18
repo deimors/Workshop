@@ -6,19 +6,19 @@ using Zenject;
 
 namespace Workshop.Presentation.Jobs.Panel
 {
-	public class AssignedWorkTextPresenter : MonoBehaviour, IDisplayAssignedWork
+	public class JobStatusPresenter : MonoBehaviour, IDisplayJobStatus
 	{
 		[SerializeField]
-		private Text _assignedWorkText;
+		private Text _jobStatusText;
 
 		[Inject]
 		public JobIdentifier Identifier { get; }
 
-		public string AssignedWork
+		public string Status
 		{
 			set
 			{
-				_assignedWorkText.text = value;
+				_jobStatusText.text = value;
 			}
 		}
 	}
