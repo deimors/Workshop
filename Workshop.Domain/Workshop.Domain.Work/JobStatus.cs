@@ -5,11 +5,13 @@ namespace Workshop.Domain.Work
 {
 	public class JobStatus : IEquatable<JobStatus>
 	{
+		public static readonly JobStatus Default = new JobStatus(QuantityOfWork.Unit, QuantityOfWork.None, false);
+
 		public QuantityOfWork Total { get; }
 
 		public QuantityOfWork Completed { get; }
 
-		public bool IsCompleted => Total == Completed;
+		public bool IsFinished => Total == Completed;
 
 		public bool Busy { get; }
 
@@ -25,9 +27,6 @@ namespace Workshop.Domain.Work
 			Completed = completed ?? throw new ArgumentNullException(nameof(completed));
 			Busy = busy;
 		}
-
-		public static JobStatus Create(QuantityOfWork total)
-			=> new JobStatus(total, QuantityOfWork.None, false);
 
 		public JobStatus With(
 			Func<QuantityOfWork, QuantityOfWork> total = null, 

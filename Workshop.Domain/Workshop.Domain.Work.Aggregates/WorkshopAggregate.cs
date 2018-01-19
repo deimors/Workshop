@@ -37,7 +37,7 @@ namespace Workshop.Domain.Work.Aggregates
 				.FailIf(() => !State.Jobs.ContainsKey(command.JobId), () => WorkshopError.UnknownJob)
 				.FailIf(() => State.Jobs[command.JobId].Status.Busy, () => WorkshopError.JobIsBusy)
 				.FailIf(() => State.Workers[command.WorkerId].Status.Busy, () => WorkshopError.WorkerIsBusy)
-				.FailIf(() => State.Jobs[command.JobId].Status.IsCompleted, () => WorkshopError.JobCompleted)
+				.FailIf(() => State.Jobs[command.JobId].Status.IsFinished, () => WorkshopError.JobCompleted)
 				.RecordIf(() => State.Assignments.Values.Contains(command.WorkerId), () => new WorkshopEvent.JobUnassigned(command.WorkerId, GetAssignedJob(command.WorkerId)))
 				.RecordIf(() => State.Assignments.ContainsKey(command.JobId), () => new WorkshopEvent.JobUnassigned(State.Assignments[command.JobId], command.JobId))
 				.Record(() => new WorkshopEvent.JobAssigned(command.WorkerId, command.JobId))
@@ -59,7 +59,7 @@ namespace Workshop.Domain.Work.Aggregates
 				.FailIf(() => !State.Jobs[command.JobId].Status.Busy, () => WorkshopError.WorkNotStarted)
 				.Record(() => new WorkshopEvent.JobStatusUpdated(command.JobId, State.Jobs[command.JobId].Status.With(completed: x => x + command.Quantity, busy: _ => false)))
 				.Record(() => BuildWorkerBusyStatusEventFactory(false).Invoke(State.Workers[State.Assignments[command.JobId]]))
-				.RecordIf(() => State.Jobs[command.JobId].Status.IsCompleted, () => new WorkshopEvent.JobUnassigned(State.Assignments[command.JobId], command.JobId))
+				.RecordIf(() => State.Jobs[command.JobId].Status.IsFinished, () => new WorkshopEvent.JobUnassigned(State.Assignments[command.JobId], command.JobId))
 				.Execute();
 		
 		private Maybe<WorkshopError> UnassignWorker(WorkshopCommand.UnassignWorker command)

@@ -5,6 +5,8 @@ namespace Workshop.Domain.Work
 {
 	public class WorkerStatus : IEquatable<WorkerStatus>
 	{
+		public static readonly WorkerStatus Default = new WorkerStatus(false);
+
 		public bool Busy { get; }
 
 		public WorkerStatus(bool busy)

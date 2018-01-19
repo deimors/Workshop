@@ -53,9 +53,9 @@
     <Compile Include="JobIdentifier.cs" />
     <Compile Include="JobStatus.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="QuantityOfEffort.cs" />
     <Compile Include="QuantityOfWork.cs" />
     <Compile Include="Worker.cs" />
+    <Compile Include="WorkerAttributes.cs" />
     <Compile Include="WorkerIdentifier.cs" />
     <Compile Include="WorkerStatus.cs" />
   </ItemGroup>

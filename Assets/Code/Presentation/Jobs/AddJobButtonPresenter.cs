@@ -26,7 +26,7 @@ namespace Workshop.Presentation.Jobs
 		private WorkshopCommand CreateAddJobCommand()
 			=> new WorkshopCommand.AddJob(CreateNewJob());
 
-		private Job CreateNewJob() 
-			=> new Job(new JobIdentifier(), JobStatus.Create(_quantityOfWork * QuantityOfWork.Unit));
+		private Job CreateNewJob()
+			=> Job.CreateDefault().With(status: s => s.With(total: t => _quantityOfWork * t));
 	}
 }

@@ -20,8 +20,8 @@ namespace Workshop.UseCases.Work
 			var jobIsCompleted = workshopEvents
 				.OfType<WorkshopEvent, WorkshopEvent.JobStatusUpdated>()
 				.Where(statusUpdated => statusUpdated.JobId == jobId)
-				.Select(statusUpdated => statusUpdated.NewStatus.IsCompleted)
-				.Merge(jobAddedEvents.Select(jobAdded => jobAdded.Job.Status.IsCompleted));
+				.Select(statusUpdated => statusUpdated.NewStatus.IsFinished)
+				.Merge(jobAddedEvents.Select(jobAdded => jobAdded.Job.Status.IsFinished));
 
 			jobAddedEvents.AsUnitObservable()
 				.Merge(jobUnassignedEvents.AsUnitObservable())

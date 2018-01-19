@@ -26,6 +26,6 @@ namespace Workshop.Presentation.Workers
 			=> new WorkshopCommand.AddWorker(CreateNewWorker());
 
 		private Worker CreateNewWorker()
-			=> new Worker(new WorkerIdentifier(), new WorkerStatus(false));
+			=> Worker.NewDefault();
 	}
 }

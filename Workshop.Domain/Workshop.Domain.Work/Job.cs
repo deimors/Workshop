@@ -22,5 +22,8 @@ namespace Workshop.Domain.Work
 			(id ?? Function.Ident)(Id),
 			(status ?? Function.Ident)(Status)
 		);
+
+		public static Job CreateDefault()
+			=> new Job(new JobIdentifier(), JobStatus.Default);
 	}
 }
