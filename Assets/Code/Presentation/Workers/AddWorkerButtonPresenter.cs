@@ -26,6 +26,12 @@ namespace Workshop.Presentation.Workers
 			=> new WorkshopCommand.AddWorker(CreateNewWorker());
 
 		private Worker CreateNewWorker()
-			=> Worker.NewDefault();
+			=> Worker.NewDefault().With(attributes: _ => RandomAttributes());
+
+		private WorkerAttributes RandomAttributes()
+			=> new WorkerAttributes(
+				Random.Range(.1f, 2),
+				Random.Range(.1f, 1)
+			);
 	}
 }

@@ -18,6 +18,7 @@ namespace Workshop.Presentation.Workers.Panel
 			Container.BindInstance(Identifier);
 
 			Container.Bind<AssignedJobReadModel>().AsSingle();
+			Container.Bind<WorkerSpeedReadModel>().AsSingle();
 
 			Container.Bind<WorkOnAssignedJobWhenWorkButtonClicked>().AsSingle().NonLazy();
 			Container.Bind<UpdateWorkButtonInteractableWhenWorkerStatusUpdated>().AsSingle().NonLazy();
