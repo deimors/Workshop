@@ -4,19 +4,13 @@ namespace Workshop.Domain.Work
 {
 	public class WorkerAttributes : IEquatable<WorkerAttributes>
 	{
-		public static readonly WorkerAttributes Default = new WorkerAttributes(1, 1);
+		public static readonly WorkerAttributes Default = new WorkerAttributes(FloatRange.ZeroOne, FloatRange.ZeroOne);
 
-		public float Speed { get; }
-		public float Quality { get; }
+		public FloatRange Speed { get; }
+		public FloatRange Quality { get; }
 
-		public WorkerAttributes(float speed, float quality)
+		public WorkerAttributes(FloatRange speed, FloatRange quality)
 		{
-			if (speed <= 0)
-				throw new ArgumentOutOfRangeException($"{nameof(speed)} <= 0");
-
-			if (quality <= 0)
-				throw new ArgumentOutOfRangeException($"{nameof(quality)} <= 0");
-
 			Speed = speed;
 			Quality = quality;
 		}

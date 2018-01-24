@@ -29,9 +29,9 @@ namespace Workshop.Presentation.Workers
 			=> Worker.NewDefault().With(attributes: _ => RandomAttributes());
 
 		private WorkerAttributes RandomAttributes()
-			=> new WorkerAttributes(
-				Random.Range(.1f, 2),
-				Random.Range(.1f, 1)
-			);
+			=> new WorkerAttributes(RandomRange(), RandomRange());
+
+		private FloatRange RandomRange()
+			=> new FloatRange(Random.Range(0, 0.5f), Random.Range(0.5f, 1));
 	}
 }

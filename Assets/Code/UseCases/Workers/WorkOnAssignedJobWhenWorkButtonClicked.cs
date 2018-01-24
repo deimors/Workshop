@@ -8,30 +8,30 @@ using Workshop.Domain.Work.Aggregates;
 
 namespace Workshop.UseCases.Work
 {
-	public class WorkerSpeedReadModel
+	public class WorkerAttributesReadModel
 	{
-		public float WorkerSpeed { get; private set; } = 1.0f;
+		public WorkerAttributes Value { get; private set; }
 
-		public WorkerSpeedReadModel(WorkerIdentifier workerId, IObservable<WorkshopEvent> workshopEvents)
+		public WorkerAttributesReadModel(WorkerIdentifier workerId, IObservable<WorkshopEvent> workshopEvents)
 		{
 			workshopEvents
 				.OfType<WorkshopEvent, WorkshopEvent.WorkerAdded>()
 				.Where(workerAdded => workerAdded.Worker.Id == workerId)
-				.Subscribe(workerAdded => WorkerSpeed = workerAdded.Worker.Attributes.Speed);
+				.Subscribe(workerAdded => Value = workerAdded.Worker.Attributes);
 		}
 	}
 
 	public class WorkOnAssignedJobWhenWorkButtonClicked
 	{
-		private readonly AssignedJobReadModel _assignedJobModel;
-		private readonly WorkerSpeedReadModel _workerSpeedModel;
+		private readonly AssignedJobReadModel _assignedJob;
+		private readonly WorkerAttributesReadModel _attributes;
 		private readonly IEnqueueCommand<WorkshopCommand> _workshopCommands;
 		private readonly IDisplayProgress _displayProgress;
 
-		public WorkOnAssignedJobWhenWorkButtonClicked(AssignedJobReadModel assignedJobModel, WorkerSpeedReadModel workerSpeedModel, IWorkButtonClickedObservable workButtonClicked, IEnqueueCommand<WorkshopCommand> workshopCommands, IDisplayProgress displayProgress)
+		public WorkOnAssignedJobWhenWorkButtonClicked(AssignedJobReadModel assignedJobModel, WorkerAttributesReadModel workerSpeedModel, IWorkButtonClickedObservable workButtonClicked, IEnqueueCommand<WorkshopCommand> workshopCommands, IDisplayProgress displayProgress)
 		{
-			_assignedJobModel = assignedJobModel;
-			_workerSpeedModel = workerSpeedModel;
+			_assignedJob = assignedJobModel;
+			_attributes = workerSpeedModel;
 			_workshopCommands = workshopCommands;
 			_displayProgress = displayProgress;
 			
@@ -39,12 +39,12 @@ namespace Workshop.UseCases.Work
 		}
 
 		public void MaybeWorkOnAssignedJob()
-			=> _assignedJobModel.AssignedJob.Match(WorkOnJob, () => { });
+			=> _assignedJob.Value.Match(WorkOnJob, () => { });
 
 		private void WorkOnJob(JobIdentifier jobId)
 		{
 			StartWorkOnJob(jobId);
-			CompleteWorkOnJobAfterDelay(jobId, 1 / _workerSpeedModel.WorkerSpeed);
+			CompleteWorkOnJobAfterDelay(jobId, 1 / GetRandom(_attributes.Value.Speed));
 		}
 		
 		private void StartWorkOnJob(JobIdentifier jobId)
@@ -64,6 +64,9 @@ namespace Workshop.UseCases.Work
 				);
 
 		private void CompleteWorkOnJob(JobIdentifier jobId)
-			=> _workshopCommands.Enqueue(new WorkshopCommand.CompleteWork(jobId, QuantityOfWork.Unit));
+			=> _workshopCommands.Enqueue(new WorkshopCommand.CompleteWork(jobId, GetRandom(_attributes.Value.Quality) * QuantityOfWork.Unit));
+
+		private float GetRandom(FloatRange range)
+			=> UnityEngine.Random.Range(range.Min, range.Max);
 	}
 }

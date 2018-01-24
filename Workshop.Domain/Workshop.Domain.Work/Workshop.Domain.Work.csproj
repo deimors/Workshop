@@ -49,6 +49,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FloatRange.cs" />
+    <Compile Include="FloatRangeExtensions.cs" />
     <Compile Include="Job.cs" />
     <Compile Include="JobIdentifier.cs" />
     <Compile Include="JobStatus.cs" />

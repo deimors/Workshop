@@ -1,5 +1,6 @@
 ﻿using Ploeh.AutoFixture;
 using Ploeh.AutoFixture.Xunit2;
+using System.Linq;
 
 namespace Workshop.Domain.Work.Aggregates.Tests.Customizations
 {
@@ -12,6 +13,8 @@ namespace Workshop.Domain.Work.Aggregates.Tests.Customizations
 			fixture.Register(() => CreateJobStatus(fixture));
 
 			fixture.Register(() => CreateWorkerStatus(fixture));
+
+			fixture.Register(() => CreateFloatRange(fixture));
 		}
 
 		private static QuantityOfWork CreateQuantityOfWork(IFixture fixture) 
@@ -29,6 +32,13 @@ namespace Workshop.Domain.Work.Aggregates.Tests.Customizations
 
 		private WorkerStatus CreateWorkerStatus(IFixture fixture)
 			=> new WorkerStatus(false);
+
+		private FloatRange CreateFloatRange(IFixture fixture)
+		{
+			var floats = fixture.CreateMany<float>(2).OrderBy(x => x).ToArray();
+
+			return new FloatRange(floats[0], floats[1]);
+		}
 	}
 
 	public class WorkAutoDataAttribute : AutoDataAttribute

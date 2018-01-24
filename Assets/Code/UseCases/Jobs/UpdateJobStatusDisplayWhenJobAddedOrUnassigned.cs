@@ -1,5 +1,6 @@
 ﻿using System;
 using UniRx;
+using UnityEngine;
 using Workshop.Domain.Work;
 using Workshop.Domain.Work.Aggregates;
 
@@ -19,12 +20,12 @@ namespace Workshop.UseCases.Work
 
 			var jobIsCompleted = workshopEvents
 				.OfType<WorkshopEvent, WorkshopEvent.JobStatusUpdated>()
-				.Where(statusUpdated => statusUpdated.JobId == jobId)
-				.Select(statusUpdated => statusUpdated.NewStatus.IsFinished)
-				.Merge(jobAddedEvents.Select(jobAdded => jobAdded.Job.Status.IsFinished));
+				.Where(statusUpdated => statusUpdated.JobId == jobId && statusUpdated.NewStatus.IsFinished)
+				.Select(_ => false)
+				.Merge(jobAddedEvents.Select(_ => false));
 
-			jobAddedEvents.AsUnitObservable()
-				.Merge(jobUnassignedEvents.AsUnitObservable())
+			jobUnassignedEvents.AsUnitObservable()
+				.Merge(jobAddedEvents.AsUnitObservable())
 				.CombineLatest(jobIsCompleted, (_, isCompleted) => isCompleted ? "Completed" : "Unassigned")
 				.Subscribe(statusText => displayStatus.Status = statusText);
 		}

@@ -1,6 +1,7 @@
 ﻿using Functional.Maybe;
 using System;
 using System.Collections.Concurrent;
+using UnityEngine;
 using Workshop.Core;
 
 namespace Workshop.Actors
@@ -33,7 +34,9 @@ namespace Workshop.Actors
 			ICommandQueueItem<TCommand, TError> queueItem;
 
 			while (_commandQueue.TryDequeue(out queueItem))
-				queueItem.Process(commandHandler).Match(onError, commit);
+				queueItem
+					.Process(commandHandler)
+					.Match(onError, commit);
 		}
 	}
 }
